@@ -1,13 +1,20 @@
 import 'package:weather/weather.dart';
+import '../../../../core/config/api_config.dart';
 
 /// Service to fetch weather data
 /// Uses OpenWeatherMap API for weather information
 class WeatherService {
-  static const String _apiKey = 'YOUR_OPENWEATHERMAP_API_KEY'; // TODO: Move to environment variables
   late final WeatherFactory _weatherFactory;
 
   WeatherService() {
-    _weatherFactory = WeatherFactory(_apiKey);
+    // Check if API key is configured
+    if (!ApiConfig.isWeatherApiConfigured) {
+      print('⚠️  [WEATHER] OpenWeatherMap API key not configured!');
+      print('⚠️  [WEATHER] Please add your API key to lib/core/config/api_config.dart');
+      print('⚠️  [WEATHER] Sign up at: https://openweathermap.org/api');
+    }
+
+    _weatherFactory = WeatherFactory(ApiConfig.openWeatherMapApiKey);
   }
 
   /// Get current weather for coordinates

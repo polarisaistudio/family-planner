@@ -1,0 +1,74 @@
+PODS:
+  - Flutter (3.13.0)
+  - flutter_local_notifications (0.0.1):
+    - Flutter
+  - geocoding_ios (1.0.5):
+    - Flutter
+  - geolocator_apple (1.2.0):
+    - Flutter
+  - google_maps_flutter_ios (0.0.1):
+    - Flutter
+    - GoogleMaps (< 9.0)
+  - GoogleMaps (8.4.0):
+    - GoogleMaps/Maps (= 8.4.0)
+  - GoogleMaps/Base (8.4.0)
+  - GoogleMaps/Maps (8.4.0):
+    - GoogleMaps/Base
+  - integration_test (0.0.1):
+    - Flutter
+  - permission_handler_apple (9.1.1):
+    - Flutter
+  - shared_preferences_foundation (0.0.1):
+    - Flutter
+    - FlutterMacOS
+  - workmanager (0.0.1):
+    - Flutter
+
+DEPENDENCIES:
+  - flutter_local_notifications (from `/Users/xinwang/.pub-cache/hosted/pub.dev/flutter_local_notifications-15.1.3/ios`)
+  - geocoding_ios (from `/Users/xinwang/.pub-cache/hosted/pub.dev/geocoding_ios-2.3.0/ios`)
+  - geolocator_apple (from `/Users/xinwang/.pub-cache/hosted/pub.dev/geolocator_apple-2.3.9/ios`)
+  - google_maps_flutter_ios (from `/Users/xinwang/.pub-cache/hosted/pub.dev/google_maps_flutter_ios-2.3.6/ios`)
+  - integration_test (from `/Users/xinwang/developer/flutter/packages/integration_test/ios`)
+  - permission_handler_apple (from `/Users/xinwang/.pub-cache/hosted/pub.dev/permission_handler_apple-9.1.4/ios`)
+  - shared_preferences_foundation (from `/Users/xinwang/.pub-cache/hosted/pub.dev/shared_preferences_foundation-2.3.5/darwin`)
+  - workmanager (from `/Users/xinwang/.pub-cache/hosted/pub.dev/workmanager-0.5.1/ios`)
+
+SPEC REPOS:
+  trunk:
+    - Flutter
+    - GoogleMaps
+
+EXTERNAL SOURCES:
+  flutter_local_notifications:
+    :path: "/Users/xinwang/.pub-cache/hosted/pub.dev/flutter_local_notifications-15.1.3/ios"
+  geocoding_ios:
+    :path: "/Users/xinwang/.pub-cache/hosted/pub.dev/geocoding_ios-2.3.0/ios"
+  geolocator_apple:
+    :path: "/Users/xinwang/.pub-cache/hosted/pub.dev/geolocator_apple-2.3.9/ios"
+  google_maps_flutter_ios:
+    :path: "/Users/xinwang/.pub-cache/hosted/pub.dev/google_maps_flutter_ios-2.3.6/ios"
+  integration_test:
+    :path: "/Users/xinwang/developer/flutter/packages/integration_test/ios"
+  permission_handler_apple:
+    :path: "/Users/xinwang/.pub-cache/hosted/pub.dev/permission_handler_apple-9.1.4/ios"
+  shared_preferences_foundation:
+    :path: "/Users/xinwang/.pub-cache/hosted/pub.dev/shared_preferences_foundation-2.3.5/darwin"
+  workmanager:
+    :path: "/Users/xinwang/.pub-cache/hosted/pub.dev/workmanager-0.5.1/ios"
+
+SPEC CHECKSUMS:
+  Flutter: 8ff16720b007bae16abfe75ef9fe3ee45ead486a
+  flutter_local_notifications: ef18f0537538fcd18e9106b3ddc91cc10b4e579a
+  geocoding_ios: 86f1c479822f07a2f79f7094f2b753d1e9e20215
+  geolocator_apple: 1560c3c875af2a412242c7a923e15d0d401966ff
+  google_maps_flutter_ios: 857ed2745299c183d5cc91b3282606a403d5a179
+  GoogleMaps: 8939898920281c649150e0af74aa291c60f2e77d
+  integration_test: 4a889634ef21a45d28d50d622cf412dc6d9f586e
+  permission_handler_apple: 3787117e48f80715ff04a3830ca039283d6a4f29
+  shared_preferences_foundation: 0b09b969fb36da5551c0bc4a2dbd9d0ff9387478
+  workmanager: 01be2de7f184bd15de93a1812936a2b7f42ef07e
+
+PODFILE CHECKSUM: aa8545cba6293fc353a5485f5df00cbdc5014c8a
+
+COCOAPODS: 1.16.2

@@ -2,26 +2,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../data/repositories/firebase_todo_repository_impl.dart';
+import '../../data/repositories/unified_todo_repository.dart';
 import '../../domain/entities/todo_entity.dart';
 import '../../domain/repositories/todo_repository.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 
-/// Provider for TodoRepository
-final todoRepositoryProvider = Provider<TodoRepository>((ref) {
-  return FirebaseTodoRepositoryImpl(
-    ref.watch(firestoreProvider),
-    ref.watch(firebaseAuthProvider),
+/// Provider for Unified Todo Repository (uses REST on iOS, SDK elsewhere)
+final unifiedTodoRepositoryProvider = Provider<UnifiedTodoRepository>((ref) {
+  final authRepo = ref.watch(unifiedAuthRepositoryProvider);
+  return UnifiedTodoRepository(
+    authRepository: authRepo,
+    firebaseAuth: ref.watch(firebaseAuthProvider),
+    firestore: ref.watch(firestoreProvider),
   );
 });
 
 /// Provider for all todos
 final todosProvider = StateNotifierProvider<TodosNotifier, AsyncValue<List<TodoEntity>>>((ref) {
-  return TodosNotifier(ref.watch(todoRepositoryProvider));
+  return TodosNotifier(ref.watch(unifiedTodoRepositoryProvider));
 });
 
 /// Notifier for managing todos state
 class TodosNotifier extends StateNotifier<AsyncValue<List<TodoEntity>>> {
-  final TodoRepository _todoRepository;
+  final UnifiedTodoRepository _todoRepository;
 
   TodosNotifier(this._todoRepository) : super(const AsyncValue.loading()) {
     loadTodos();
@@ -31,7 +34,7 @@ class TodosNotifier extends StateNotifier<AsyncValue<List<TodoEntity>>> {
   Future<void> loadTodos() async {
     state = const AsyncValue.loading();
     try {
-      final todos = await _todoRepository.getAllTodos();
+      final todos = await _todoRepository.getTodos();
       state = AsyncValue.data(todos);
     } catch (e, stackTrace) {
       state = AsyncValue.error(e, stackTrace);
@@ -100,19 +103,19 @@ class TodosNotifier extends StateNotifier<AsyncValue<List<TodoEntity>>> {
 
 /// Provider for todos by date
 final todosByDateProvider = FutureProvider.family<List<TodoEntity>, DateTime>((ref, date) async {
-  final repository = ref.watch(todoRepositoryProvider);
+  final repository = ref.watch(unifiedTodoRepositoryProvider);
   return await repository.getTodosByDate(date);
 });
 
 /// Provider for todos by date range
 final todosByDateRangeProvider = FutureProvider.family<List<TodoEntity>, DateRange>((ref, dateRange) async {
-  final repository = ref.watch(todoRepositoryProvider);
+  final repository = ref.watch(unifiedTodoRepositoryProvider);
   return await repository.getTodosByDateRange(dateRange.start, dateRange.end);
 });
 
 /// Provider for a single todo by ID
 final todoByIdProvider = FutureProvider.family<TodoEntity?, String>((ref, id) async {
-  final repository = ref.watch(todoRepositoryProvider);
+  final repository = ref.watch(unifiedTodoRepositoryProvider);
   return await repository.getTodoById(id);
 });
 

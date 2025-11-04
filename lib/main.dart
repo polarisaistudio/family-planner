@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'core/themes/app_theme.dart';
+import 'core/platform/platform_service.dart';
 import 'features/auth/presentation/providers/auth_providers.dart';
 import 'features/auth/presentation/pages/login_page.dart';
 import 'features/calendar/presentation/pages/calendar_page.dart';
@@ -11,10 +13,17 @@ import 'shared/widgets/loading_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  // Initialize Firebase only on platforms that support SDK (Web/Android)
+  // iOS uses REST API to avoid gRPC/Xcode 16 issues
+  if (PlatformService.useFirebaseSDK) {
+    print('🔥 Initializing Firebase SDK...');
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print('✅ Firebase SDK initialized');
+  } else {
+    print('📱 Using Firebase REST API (iOS - no gRPC dependencies)');
+  }
 
   runApp(
     const ProviderScope(

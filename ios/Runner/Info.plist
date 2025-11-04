@@ -55,11 +55,37 @@
 	<string>We need background location access to send timely reminders based on your location</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>We need background location access to send timely reminders based on your location</string>
+
+	<!-- Notification Permissions -->
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>We need notification permission to send you reminders for your tasks and events</string>
+
+	<!-- Calendar Access (if needed for scheduling) -->
+	<key>NSCalendarsUsageDescription</key>
+	<string>We need calendar access to help you manage your schedule</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>We need reminders access to sync your tasks</string>
+
+	<!-- Photo Library (if you add photo attachments to tasks) -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need photo library access to let you attach photos to your tasks</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>We need permission to save photos for your tasks</string>
+
+	<!-- Camera (if you add camera features) -->
+	<key>NSCameraUsageDescription</key>
+	<string>We need camera access to let you take photos for your tasks</string>
+
+	<!-- Microphone (if you add voice notes) -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>We need microphone access for voice notes</string>
+
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
 		<string>fetch</string>
 		<string>processing</string>
+		<string>remote-notification</string>
 	</array>
 </dict>
 </plist>

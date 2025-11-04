@@ -36,22 +36,29 @@ class PermissionService {
         return false;
       }
 
-      // Request when-in-use location permission
-      final status = await Permission.location.request();
+      // Use Geolocator instead of permission_handler for iOS compatibility
+      print('🔵 [PERMISSION] Checking current location permission status...');
+      LocationPermission permission = await Geolocator.checkPermission();
+      print('🔵 [PERMISSION] Current status: $permission');
 
-      if (status.isGranted) {
-        print('🟢 [PERMISSION] Location permission granted');
-        return true;
-      } else if (status.isDenied) {
-        print('🔴 [PERMISSION] Location permission denied');
-        return false;
-      } else if (status.isPermanentlyDenied) {
-        print('🔴 [PERMISSION] Location permission permanently denied');
-        // User must enable permission in settings
+      if (permission == LocationPermission.denied) {
+        print('🔵 [PERMISSION] Requesting location permission...');
+        permission = await Geolocator.requestPermission();
+        print('🔵 [PERMISSION] New status after request: $permission');
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        print('🔴 [PERMISSION] Location permission permanently denied - opening settings');
         await openAppSettings();
         return false;
       }
 
+      if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+        print('🟢 [PERMISSION] Location permission granted');
+        return true;
+      }
+
+      print('🔴 [PERMISSION] Location permission denied');
       return false;
     } catch (e) {
       print('🔴 [PERMISSION] Error requesting location permission: $e');
@@ -93,21 +100,36 @@ class PermissionService {
   /// Request notification permission
   Future<bool> requestNotificationPermission() async {
     try {
-      final status = await Permission.notification.request();
+      print('🔵 [PERMISSION] Checking notification permission status...');
+      final currentStatus = await Permission.notification.status;
+      print('🔵 [PERMISSION] Current notification status: $currentStatus');
 
-      if (status.isGranted || status.isLimited) {
-        print('🟢 [PERMISSION] Notification permission granted');
+      if (currentStatus.isGranted || currentStatus.isLimited) {
+        print('🟢 [PERMISSION] Notification permission already granted');
         return true;
-      } else if (status.isDenied) {
-        print('🔴 [PERMISSION] Notification permission denied');
-        return false;
-      } else if (status.isPermanentlyDenied) {
-        print('🔴 [PERMISSION] Notification permission permanently denied');
+      }
+
+      if (currentStatus.isPermanentlyDenied) {
+        print('🔴 [PERMISSION] Notification permission permanently denied - opening settings');
         await openAppSettings();
         return false;
       }
 
-      return false;
+      print('🔵 [PERMISSION] Requesting notification permission...');
+      final status = await Permission.notification.request();
+      print('🔵 [PERMISSION] New notification status: $status');
+
+      if (status.isGranted || status.isLimited) {
+        print('🟢 [PERMISSION] Notification permission granted');
+        return true;
+      } else if (status.isPermanentlyDenied) {
+        print('🔴 [PERMISSION] Notification permission permanently denied - opening settings');
+        await openAppSettings();
+        return false;
+      } else {
+        print('🔴 [PERMISSION] Notification permission denied');
+        return false;
+      }
     } catch (e) {
       print('🔴 [PERMISSION] Error requesting notification permission: $e');
       return false;

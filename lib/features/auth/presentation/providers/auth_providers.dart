@@ -2,35 +2,37 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../data/repositories/firebase_auth_repository_impl.dart';
+import '../../data/repositories/unified_auth_repository.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../../../core/platform/platform_service.dart';
 
-/// Provider for Firebase Auth instance
-final firebaseAuthProvider = Provider<FirebaseAuth>((ref) {
-  return FirebaseAuth.instance;
+/// Provider for Firebase Auth instance (only used on Web/Android)
+final firebaseAuthProvider = Provider<FirebaseAuth?>((ref) {
+  return PlatformService.useFirebaseSDK ? FirebaseAuth.instance : null;
 });
 
-/// Provider for Firestore instance
-final firestoreProvider = Provider<FirebaseFirestore>((ref) {
-  return FirebaseFirestore.instance;
+/// Provider for Firestore instance (only used on Web/Android)
+final firestoreProvider = Provider<FirebaseFirestore?>((ref) {
+  return PlatformService.useFirebaseSDK ? FirebaseFirestore.instance : null;
 });
 
-/// Provider for AuthRepository
-final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return FirebaseAuthRepositoryImpl(
-    ref.watch(firebaseAuthProvider),
-    ref.watch(firestoreProvider),
+/// Provider for Unified Auth Repository (uses REST on iOS, SDK elsewhere)
+final unifiedAuthRepositoryProvider = Provider<UnifiedAuthRepository>((ref) {
+  return UnifiedAuthRepository(
+    firebaseAuth: ref.watch(firebaseAuthProvider),
+    firestore: ref.watch(firestoreProvider),
   );
 });
 
 /// Provider for current user state
 final currentUserProvider = StateNotifierProvider<CurrentUserNotifier, AsyncValue<UserEntity?>>((ref) {
-  return CurrentUserNotifier(ref.watch(authRepositoryProvider));
+  return CurrentUserNotifier(ref.watch(unifiedAuthRepositoryProvider));
 });
 
 /// Notifier for managing current user state
 class CurrentUserNotifier extends StateNotifier<AsyncValue<UserEntity?>> {
-  final AuthRepository _authRepository;
+  final UnifiedAuthRepository _authRepository;
 
   CurrentUserNotifier(this._authRepository) : super(const AsyncValue.loading()) {
     _init();
@@ -40,11 +42,6 @@ class CurrentUserNotifier extends StateNotifier<AsyncValue<UserEntity?>> {
     try {
       final user = await _authRepository.getCurrentUser();
       state = AsyncValue.data(user);
-
-      // Listen to auth state changes
-      _authRepository.authStateChanges.listen((user) {
-        state = AsyncValue.data(user);
-      });
     } catch (e, stackTrace) {
       state = AsyncValue.error(e, stackTrace);
     }
@@ -58,10 +55,10 @@ class CurrentUserNotifier extends StateNotifier<AsyncValue<UserEntity?>> {
   }) async {
     state = const AsyncValue.loading();
     try {
-      final user = await _authRepository.signUp(
+      final user = await _authRepository.signUpWithEmailAndPassword(
         email: email,
         password: password,
-        fullName: fullName,
+        fullName: fullName ?? '',
       );
       state = AsyncValue.data(user);
     } catch (e, stackTrace) {
@@ -76,7 +73,7 @@ class CurrentUserNotifier extends StateNotifier<AsyncValue<UserEntity?>> {
   }) async {
     state = const AsyncValue.loading();
     try {
-      final user = await _authRepository.signIn(
+      final user = await _authRepository.signInWithEmailAndPassword(
         email: email,
         password: password,
       );

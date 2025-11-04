@@ -7,6 +7,8 @@ import '../../../todos/presentation/providers/todo_providers.dart';
 import '../../../todos/domain/entities/todo_entity.dart';
 import '../widgets/todo_list_item.dart';
 import '../widgets/add_todo_dialog.dart';
+import '../../../smart_planning/presentation/widgets/smart_suggestions_card.dart';
+import '../../../smart_planning/presentation/providers/smart_planning_provider.dart';
 
 class CalendarPage extends ConsumerStatefulWidget {
   const CalendarPage({super.key});
@@ -24,6 +26,16 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
   void initState() {
     super.initState();
     _selectedDay = _focusedDay;
+  }
+
+  void _analyzeSelectedDay(List<TodoEntity> todos) {
+    final selectedDayTodos = _getTodosForDay(todos, _selectedDay ?? DateTime.now());
+    if (selectedDayTodos.isNotEmpty) {
+      // Analyze todos for the selected day
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(smartPlanningProvider.notifier).analyzeDayTodos(selectedDayTodos);
+      });
+    }
   }
 
   List<TodoEntity> _getTodosForDay(List<TodoEntity> todos, DateTime day) {
@@ -112,6 +124,8 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                       _selectedDay = selectedDay;
                       _focusedDay = focusedDay;
                     });
+                    // Analyze the newly selected day
+                    _analyzeSelectedDay(todos);
                   },
                   onFormatChanged: (format) {
                     setState(() {
@@ -162,6 +176,9 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
               ),
 
               const Divider(height: 1),
+
+              // Smart Suggestions
+              const SmartSuggestionsCard(),
 
               // Todos List
               Expanded(
