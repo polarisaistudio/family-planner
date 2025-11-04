@@ -4,13 +4,20 @@ import 'package:intl/intl.dart';
 import '../../../../core/themes/app_theme.dart';
 import '../../../todos/domain/entities/todo_entity.dart';
 import '../../../todos/presentation/providers/todo_providers.dart';
+import 'add_todo_dialog.dart';
 
 class TodoListItem extends ConsumerWidget {
   final TodoEntity todo;
+  final bool isSelectionMode;
+  final bool isSelected;
+  final VoidCallback? onSelectionChanged;
 
   const TodoListItem({
     super.key,
     required this.todo,
+    this.isSelectionMode = false,
+    this.isSelected = false,
+    this.onSelectionChanged,
   });
 
   IconData _getTypeIcon(String type) {
@@ -34,8 +41,28 @@ class TodoListItem extends ConsumerWidget {
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      color: isSelected ? Theme.of(context).colorScheme.primary.withOpacity(0.1) : null,
       child: ListTile(
-        leading: Container(
+        onTap: () {
+          if (isSelectionMode) {
+            onSelectionChanged?.call();
+          } else {
+            // Open edit dialog
+            showDialog(
+              context: context,
+              builder: (context) => AddTodoDialog(
+                selectedDate: todo.todoDate,
+                todoToEdit: todo,
+              ),
+            );
+          }
+        },
+        leading: isSelectionMode
+            ? Checkbox(
+                value: isSelected,
+                onChanged: (_) => onSelectionChanged?.call(),
+              )
+            : Container(
           width: 4,
           decoration: BoxDecoration(
             color: priorityColor,
@@ -84,7 +111,9 @@ class TodoListItem extends ConsumerWidget {
             ),
           ],
         ),
-        trailing: Row(
+        trailing: isSelectionMode
+            ? null
+            : Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             // Priority Badge
@@ -155,34 +184,80 @@ class TodoListItem extends ConsumerWidget {
             IconButton(
               icon: const Icon(Icons.delete_outline, size: 20),
               onPressed: () async {
-                final confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Delete Task'),
-                    content: const Text('Are you sure you want to delete this task?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Delete'),
-                      ),
-                    ],
-                  ),
-                );
+                String? deleteOption;
 
-                if (confirmed == true) {
-                  try {
-                    await ref.read(todosProvider.notifier).deleteTodo(todo.id);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Task deleted'),
-                          backgroundColor: Colors.green,
+                if (todo.isRecurring || todo.isRecurrenceInstance) {
+                  // Show options for recurring events
+                  deleteOption = await showDialog<String>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Delete Recurring Task'),
+                      content: const Text('This is a recurring task. What would you like to delete?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, null),
+                          child: const Text('Cancel'),
                         ),
-                      );
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, 'this'),
+                          child: const Text('This task only'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, 'all'),
+                          style: TextButton.styleFrom(foregroundColor: Colors.red),
+                          child: const Text('All recurring tasks'),
+                        ),
+                      ],
+                    ),
+                  );
+                } else {
+                  // Regular delete confirmation
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Delete Task'),
+                      content: const Text('Are you sure you want to delete this task?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          style: TextButton.styleFrom(foregroundColor: Colors.red),
+                          child: const Text('Delete'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed == true) deleteOption = 'this';
+                }
+
+                if (deleteOption != null) {
+                  try {
+                    if (deleteOption == 'all') {
+                      // Delete all recurring instances
+                      final parentId = todo.recurrenceParentId ?? todo.id;
+                      await ref.read(todosProvider.notifier).deleteRecurringTodos(parentId);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('All recurring tasks deleted'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    } else {
+                      // Delete only this instance
+                      await ref.read(todosProvider.notifier).deleteTodo(todo.id);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Task deleted'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
                     }
                   } catch (e) {
                     if (context.mounted) {

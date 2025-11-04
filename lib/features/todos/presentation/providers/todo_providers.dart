@@ -84,6 +84,36 @@ class TodosNotifier extends StateNotifier<AsyncValue<List<TodoEntity>>> {
     }
   }
 
+  /// Delete all recurring todos with the same parent ID
+  Future<void> deleteRecurringTodos(String parentId) async {
+    try {
+      print('🔵 [DELETE RECURRING] Starting deletion for parentId: $parentId');
+
+      // Get all todos
+      final allTodos = state.value ?? [];
+      print('🔵 [DELETE RECURRING] Total todos: ${allTodos.length}');
+
+      // Find all todos with matching parent ID or that are the parent
+      final todosToDelete = allTodos.where((todo) =>
+        todo.id == parentId || todo.recurrenceParentId == parentId
+      ).toList();
+
+      print('🔵 [DELETE RECURRING] Found ${todosToDelete.length} todos to delete');
+
+      // Delete each one
+      for (final todo in todosToDelete) {
+        print('🔵 [DELETE RECURRING] Deleting todo: ${todo.id}');
+        await _todoRepository.deleteTodo(todo.id);
+      }
+
+      print('🟢 [DELETE RECURRING] Deleted ${todosToDelete.length} todos, reloading...');
+      await loadTodos(); // Reload todos
+    } catch (e) {
+      print('🔴 [DELETE RECURRING] Error: $e');
+      rethrow;
+    }
+  }
+
   /// Toggle todo completion status
   Future<void> toggleTodoStatus(String id) async {
     try {

@@ -12,8 +12,8 @@ class SmartSuggestionsCard extends ConsumerWidget {
     final smartPlanningState = ref.watch(smartPlanningProvider);
     final permissionState = ref.watch(permissionProvider);
 
-    // Show permission request if not granted
-    if (!permissionState.allGranted) {
+    // Show permission request if location is not granted (ignore notification for now due to iOS limitations)
+    if (!permissionState.hasLocation) {
       return _PermissionRequestCard(
         missingPermissions: permissionState.missingPermissions,
         onRequestPermissions: () async {
@@ -226,6 +226,9 @@ class _PermissionRequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool hasLocation = !missingPermissions.contains('Location');
+    final bool hasNotifications = !missingPermissions.contains('Notifications');
+
     return Card(
       margin: const EdgeInsets.all(8),
       color: Colors.blue.shade50,
@@ -236,11 +239,11 @@ class _PermissionRequestCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.security, color: Colors.blue.shade700),
+                Icon(Icons.auto_awesome, color: Colors.blue.shade700),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Enable Smart Features',
+                    'Smart Planning Features',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -251,50 +254,158 @@ class _PermissionRequestCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            Text(
-              'Grant permissions to enable smart planning features:',
-              style: TextStyle(color: Colors.blue.shade700),
+
+            // Show what features are available (only location-based for now)
+            _buildFeatureRow(
+              context,
+              Icons.traffic,
+              'Traffic Updates',
+              'Get departure time suggestions based on traffic',
+              hasLocation,
             ),
             const SizedBox(height: 8),
-            ...missingPermissions.map((permission) {
-              return Padding(
-                padding: const EdgeInsets.only(left: 16, top: 4),
-                child: Row(
+            _buildFeatureRow(
+              context,
+              Icons.map,
+              'Location Context',
+              'See location details for your tasks',
+              hasLocation,
+            ),
+            const SizedBox(height: 8),
+            _buildFeatureRow(
+              context,
+              Icons.directions,
+              'Travel Time',
+              'Automatic travel time calculations',
+              hasLocation,
+            ),
+
+            const SizedBox(height: 16),
+
+            // Show permission status
+            if (missingPermissions.isNotEmpty) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.check_circle_outline, size: 16, color: Colors.blue.shade700),
-                    const SizedBox(width: 8),
+                    Row(
+                      children: [
+                        Icon(Icons.info_outline, size: 18, color: Colors.orange.shade700),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Enable in Settings',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.orange.shade900,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
                     Text(
-                      permission,
-                      style: TextStyle(color: Colors.blue.shade700),
+                      'To enable smart features, allow ${missingPermissions.join(' and ')} in your iPhone Settings.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.orange.shade900,
+                      ),
                     ),
                   ],
                 ),
-              );
-            }).toList(),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: onRequestPermissions,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue.shade700,
-                  foregroundColor: Colors.white,
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: onRequestPermissions,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade700,
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: const Icon(Icons.settings, size: 20),
+                  label: const Text('Open iPhone Settings'),
                 ),
-                child: const Text('Grant Permissions'),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Smart features include weather alerts, location reminders, and preparation notifications.',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.blue.shade600,
-                fontStyle: FontStyle.italic,
+            ] else ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.green.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.green.shade700),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'All smart features are enabled!',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green.shade900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildFeatureRow(BuildContext context, IconData icon, String title, String description, bool enabled) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          icon,
+          size: 20,
+          color: enabled ? Colors.green.shade700 : Colors.grey.shade400,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: enabled ? Colors.blue.shade900 : Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    enabled ? Icons.check_circle : Icons.circle_outlined,
+                    size: 14,
+                    color: enabled ? Colors.green.shade700 : Colors.grey.shade400,
+                  ),
+                ],
+              ),
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: enabled ? Colors.blue.shade700 : Colors.grey.shade500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

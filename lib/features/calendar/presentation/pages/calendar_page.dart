@@ -21,11 +21,84 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   CalendarFormat _calendarFormat = CalendarFormat.month;
+  bool _isSelectionMode = false;
+  final Set<String> _selectedTodoIds = {};
 
   @override
   void initState() {
     super.initState();
     _selectedDay = _focusedDay;
+  }
+
+  void _toggleSelectionMode() {
+    setState(() {
+      _isSelectionMode = !_isSelectionMode;
+      if (!_isSelectionMode) {
+        _selectedTodoIds.clear();
+      }
+    });
+  }
+
+  void _toggleTodoSelection(String todoId) {
+    setState(() {
+      if (_selectedTodoIds.contains(todoId)) {
+        _selectedTodoIds.remove(todoId);
+      } else {
+        _selectedTodoIds.add(todoId);
+      }
+    });
+  }
+
+  Future<void> _deleteSelectedTodos() async {
+    if (_selectedTodoIds.isEmpty) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Tasks'),
+        content: Text('Are you sure you want to delete ${_selectedTodoIds.length} task(s)?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        for (final todoId in _selectedTodoIds) {
+          await ref.read(todosProvider.notifier).deleteTodo(todoId);
+        }
+        setState(() {
+          _selectedTodoIds.clear();
+          _isSelectionMode = false;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${_selectedTodoIds.length} task(s) deleted'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete tasks: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
 
   void _analyzeSelectedDay(List<TodoEntity> todos) {
@@ -45,11 +118,11 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
   }
 
   Future<void> _showAddTodoDialog() async {
-    final now = DateTime.now();
-    print('🔵 [CALENDAR] Opening dialog with date: $now (day: ${now.day})');
+    final dateToUse = _selectedDay ?? DateTime.now();
+    print('🔵 [CALENDAR] Opening dialog with date: $dateToUse (day: ${dateToUse.day})');
     await showDialog(
       context: context,
-      builder: (context) => AddTodoDialog(selectedDate: now),
+      builder: (context) => AddTodoDialog(selectedDate: dateToUse),
     );
   }
 
@@ -60,14 +133,34 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Family Planner'),
+        title: Text(_isSelectionMode ? '${_selectedTodoIds.length} selected' : 'Family Planner'),
+        leading: _isSelectionMode
+            ? IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: _toggleSelectionMode,
+              )
+            : null,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              ref.read(todosProvider.notifier).loadTodos();
-            },
-          ),
+          if (_isSelectionMode) ...[
+            if (_selectedTodoIds.isNotEmpty)
+              IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: _deleteSelectedTodos,
+                tooltip: 'Delete selected',
+              ),
+          ] else ...[
+            IconButton(
+              icon: const Icon(Icons.checklist),
+              onPressed: _toggleSelectionMode,
+              tooltip: 'Select multiple',
+            ),
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () {
+                ref.read(todosProvider.notifier).loadTodos();
+              },
+            ),
+          ],
           PopupMenuButton<String>(
             onSelected: (value) async {
               if (value == 'logout') {
@@ -206,8 +299,12 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                         padding: const EdgeInsets.all(8),
                         itemCount: selectedDayTodos.length,
                         itemBuilder: (context, index) {
+                          final todo = selectedDayTodos[index];
                           return TodoListItem(
-                            todo: selectedDayTodos[index],
+                            todo: todo,
+                            isSelectionMode: _isSelectionMode,
+                            isSelected: _selectedTodoIds.contains(todo.id),
+                            onSelectionChanged: () => _toggleTodoSelection(todo.id),
                           );
                         },
                       ),

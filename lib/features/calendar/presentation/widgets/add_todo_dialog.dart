@@ -1,7 +1,11 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:http/http.dart' as http;
 import '../../../../core/constants/app_constants.dart';
 import '../../../todos/domain/entities/todo_entity.dart';
 import '../../../todos/presentation/providers/todo_providers.dart';
@@ -10,10 +14,12 @@ import '../../../../shared/utils/recurrence_helper.dart';
 
 class AddTodoDialog extends ConsumerStatefulWidget {
   final DateTime selectedDate;
+  final TodoEntity? todoToEdit;
 
   const AddTodoDialog({
     super.key,
     required this.selectedDate,
+    this.todoToEdit,
   });
 
   @override
@@ -24,12 +30,26 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _locationController = TextEditingController();
+  final _locationFocusNode = FocusNode();
 
   late DateTime _selectedDate;
   TimeOfDay? _selectedTime;
   int _priority = AppConstants.priorityMedium;
   String _type = AppConstants.todoTypePersonal;
   bool _isLoading = false;
+  String? _location;
+  double? _locationLat;
+  double? _locationLng;
+
+  // Location search state
+  Timer? _debounceTimer;
+  List<Location> _locationSuggestions = [];
+  List<String> _placeNames = [];
+  bool _isSearchingLocations = false;
+  bool _showLocationDropdown = false;
+  OverlayEntry? _overlayEntry;
+  final LayerLink _layerLink = LayerLink();
 
   // Recurrence fields
   bool _isRecurring = false;
@@ -42,13 +62,185 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
   void initState() {
     super.initState();
     _selectedDate = widget.selectedDate;
+
+    // If editing, populate fields
+    if (widget.todoToEdit != null) {
+      final todo = widget.todoToEdit!;
+      _titleController.text = todo.title;
+      _descriptionController.text = todo.description ?? '';
+      _locationController.text = todo.location ?? '';
+      _selectedDate = todo.todoDate;
+      if (todo.todoTime != null) {
+        _selectedTime = TimeOfDay(
+          hour: todo.todoTime!.hour,
+          minute: todo.todoTime!.minute,
+        );
+      }
+      _priority = todo.priority;
+      _type = todo.type;
+      _location = todo.location;
+      _locationLat = todo.locationLat;
+      _locationLng = todo.locationLng;
+      _isRecurring = todo.isRecurring;
+      _recurrencePattern = todo.recurrencePattern ?? 'daily';
+      _recurrenceInterval = todo.recurrenceInterval ?? 1;
+      _selectedWeekdays = todo.recurrenceWeekdays ?? [];
+      _recurrenceEndDate = todo.recurrenceEndDate;
+    }
   }
 
   @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
+    _locationController.dispose();
+    _locationFocusNode.dispose();
+    _debounceTimer?.cancel();
+    _removeOverlay();
     super.dispose();
+  }
+
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    _showLocationDropdown = false;
+  }
+
+  Future<void> _searchLocations(String query) async {
+    if (query.trim().length < 3) {
+      _removeOverlay();
+      setState(() {
+        _locationSuggestions = [];
+        _placeNames = [];
+        _isSearchingLocations = false;
+      });
+      return;
+    }
+
+    setState(() => _isSearchingLocations = true);
+
+    try {
+      // Use Nominatim (OpenStreetMap) API for place search
+      final encodedQuery = Uri.encodeComponent(query);
+      final url = 'https://nominatim.openstreetmap.org/search?q=$encodedQuery&format=json&limit=5&addressdetails=1';
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'User-Agent': 'FamilyPlanner/1.0'},
+      );
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        final List<dynamic> results = json.decode(response.body);
+
+        final locations = <Location>[];
+        final placeNames = <String>[];
+
+        for (var result in results) {
+          final lat = double.parse(result['lat'].toString());
+          final lon = double.parse(result['lon'].toString());
+          final displayName = result['display_name'] as String;
+
+          locations.add(Location(
+            latitude: lat,
+            longitude: lon,
+            timestamp: DateTime.now(),
+          ));
+          placeNames.add(displayName);
+        }
+
+        setState(() {
+          _locationSuggestions = locations;
+          _placeNames = placeNames;
+          _isSearchingLocations = false;
+        });
+
+        if (_locationSuggestions.isNotEmpty) {
+          _showOverlay();
+        } else {
+          _removeOverlay();
+        }
+      } else {
+        throw Exception('Failed to search locations: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('🔴 [LOCATION SEARCH] Error: $e');
+      if (!mounted) return;
+      setState(() {
+        _locationSuggestions = [];
+        _placeNames = [];
+        _isSearchingLocations = false;
+      });
+      _removeOverlay();
+    }
+  }
+
+  void _showOverlay() {
+    _removeOverlay();
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        width: 300, // Match the text field width approximately
+        child: CompositedTransformFollower(
+          link: _layerLink,
+          showWhenUnlinked: false,
+          offset: const Offset(0, 60), // Position below the text field
+          child: Material(
+            elevation: 4,
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              constraints: const BoxConstraints(maxHeight: 200),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                itemCount: _locationSuggestions.length,
+                itemBuilder: (context, index) {
+                  final location = _locationSuggestions[index];
+                  final placeName = index < _placeNames.length
+                      ? _placeNames[index]
+                      : '${location.latitude.toStringAsFixed(4)}, ${location.longitude.toStringAsFixed(4)}';
+
+                  return ListTile(
+                    dense: true,
+                    leading: const Icon(Icons.location_on, size: 20),
+                    title: Text(
+                      placeName,
+                      style: const TextStyle(fontSize: 13),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    onTap: () async {
+                      await _selectLocation(location, placeName);
+                    },
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
+    setState(() => _showLocationDropdown = true);
+  }
+
+  Future<void> _selectLocation(Location location, String placeName) async {
+    // Use the place name from Nominatim directly
+    setState(() {
+      _locationController.text = placeName;
+      _location = placeName;
+      _locationLat = location.latitude;
+      _locationLng = location.longitude;
+    });
+
+    _removeOverlay();
   }
 
   Future<void> _selectDate() async {
@@ -108,8 +300,10 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
       print('🔵 [ADD TODO] Selected date: $_selectedDate');
       print('🔵 [ADD TODO] Normalized date: $normalizedDate');
 
+      final isEditing = widget.todoToEdit != null;
+
       final todo = TodoEntity(
-        id: const Uuid().v4(),
+        id: isEditing ? widget.todoToEdit!.id : const Uuid().v4(),
         userId: user.id,
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim().isEmpty
@@ -119,8 +313,11 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
         todoTime: todoTime,
         priority: _priority,
         type: _type,
-        status: AppConstants.statusPending,
-        createdAt: DateTime.now(),
+        status: isEditing ? widget.todoToEdit!.status : AppConstants.statusPending,
+        location: _locationController.text.trim().isEmpty ? null : _locationController.text.trim(),
+        locationLat: _locationLat,
+        locationLng: _locationLng,
+        createdAt: isEditing ? widget.todoToEdit!.createdAt : DateTime.now(),
         updatedAt: DateTime.now(),
         isRecurring: _isRecurring,
         recurrencePattern: _isRecurring ? _recurrencePattern : null,
@@ -131,7 +328,10 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
         recurrenceEndDate: _isRecurring ? _recurrenceEndDate : null,
       );
 
-      if (_isRecurring) {
+      if (isEditing) {
+        // Update existing todo
+        await ref.read(todosProvider.notifier).updateTodo(todo);
+      } else if (_isRecurring) {
         // Generate recurring instances for the next 365 days
         final endDate = _recurrenceEndDate ?? normalizedDate.add(const Duration(days: 365));
         final instances = RecurrenceHelper.generateRecurringInstances(
@@ -154,8 +354,8 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
 
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Task created successfully'),
+        SnackBar(
+          content: Text(isEditing ? 'Task updated successfully' : 'Task created successfully'),
           backgroundColor: Colors.green,
         ),
       );
@@ -164,7 +364,7 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to create task: $e'),
+          content: Text('Failed to ${widget.todoToEdit != null ? 'update' : 'create'} task: $e'),
           backgroundColor: Colors.red,
           action: SnackBarAction(
             label: 'Retry',
@@ -226,7 +426,7 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Add New Task',
+                  widget.todoToEdit != null ? 'Edit Task' : 'Add New Task',
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 24),
@@ -255,6 +455,68 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                     hintText: 'Enter task description',
                   ),
                   maxLines: 3,
+                ),
+                const SizedBox(height: 16),
+
+                // Location with autocomplete
+                CompositedTransformTarget(
+                  link: _layerLink,
+                  child: TextFormField(
+                    controller: _locationController,
+                    focusNode: _locationFocusNode,
+                    decoration: InputDecoration(
+                      labelText: 'Location (optional)',
+                      hintText: 'Type at least 3 characters to search',
+                      prefixIcon: const Icon(Icons.location_on),
+                      suffixIcon: _isSearchingLocations
+                          ? const Padding(
+                              padding: EdgeInsets.all(12.0),
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            )
+                          : _locationController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: () {
+                                    _locationController.clear();
+                                    setState(() {
+                                      _location = null;
+                                      _locationLat = null;
+                                      _locationLng = null;
+                                    });
+                                    _removeOverlay();
+                                  },
+                                )
+                              : null,
+                    ),
+                    onChanged: (value) {
+                      // Cancel previous timer
+                      _debounceTimer?.cancel();
+
+                      // Set new timer for debounced search
+                      _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+                        if (value.trim().isNotEmpty) {
+                          _searchLocations(value.trim());
+                        } else {
+                          setState(() {
+                            _location = null;
+                            _locationLat = null;
+                            _locationLng = null;
+                          });
+                          _removeOverlay();
+                        }
+                      });
+                    },
+                    onTap: () {
+                      // Show overlay if there are suggestions
+                      if (_locationSuggestions.isNotEmpty) {
+                        _showOverlay();
+                      }
+                    },
+                  ),
                 ),
                 const SizedBox(height: 16),
 
@@ -499,7 +761,7 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Create'),
+                          : Text(widget.todoToEdit != null ? 'Update' : 'Create'),
                     ),
                   ],
                 ),

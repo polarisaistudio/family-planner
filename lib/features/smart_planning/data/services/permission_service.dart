@@ -6,8 +6,14 @@ import 'package:geolocator/geolocator.dart';
 class PermissionService {
   /// Check if location permission is granted
   Future<bool> hasLocationPermission() async {
-    final status = await Permission.location.status;
-    return status.isGranted;
+    try {
+      // Use Geolocator for iOS compatibility (permission_handler doesn't work properly on iOS)
+      final permission = await Geolocator.checkPermission();
+      return permission == LocationPermission.whileInUse || permission == LocationPermission.always;
+    } catch (e) {
+      print('🔴 [PERMISSION] Error checking location permission: $e');
+      return false;
+    }
   }
 
   /// Check if background location permission is granted (Android)
