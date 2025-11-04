@@ -11,6 +11,7 @@ import '../../../todos/domain/entities/todo_entity.dart';
 import '../../../todos/presentation/providers/todo_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../shared/utils/recurrence_helper.dart';
+import '../../../smart_planning/presentation/providers/smart_defaults_provider.dart';
 
 class AddTodoDialog extends ConsumerStatefulWidget {
   final DateTime selectedDate;

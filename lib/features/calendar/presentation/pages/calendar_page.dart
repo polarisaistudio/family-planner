@@ -9,6 +9,7 @@ import '../widgets/todo_list_item.dart';
 import '../widgets/add_todo_dialog.dart';
 import '../../../smart_planning/presentation/widgets/smart_suggestions_card.dart';
 import '../../../smart_planning/presentation/providers/smart_planning_provider.dart';
+import '../../../smart_planning/presentation/pages/daily_planning_page.dart';
 
 class CalendarPage extends ConsumerStatefulWidget {
   const CalendarPage({super.key});
@@ -269,6 +270,31 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
               ),
 
               const Divider(height: 1),
+
+              // Plan My Day Button
+              if (selectedDayTodos.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DailyPlanningPage(
+                            selectedDate: _selectedDay ?? DateTime.now(),
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.auto_awesome),
+                    label: const Text('Plan My Day'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade700,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 48),
+                    ),
+                  ),
+                ),
 
               // Smart Suggestions
               const SmartSuggestionsCard(),
