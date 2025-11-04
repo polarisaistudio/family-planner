@@ -21,102 +21,108 @@ class TimeBlockCard extends StatelessWidget {
       color: block.isSuggested ? Colors.blue.shade50 : Colors.white,
       child: Padding(
         padding: const EdgeInsets.all(12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Time column
-            Container(
-              width: 80,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    startTimeStr,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                  Text(
-                    endTimeStr,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  if (block.isSuggested)
-                    Container(
-                      margin: const EdgeInsets.only(top: 4),
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade100,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        'Suggested',
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Time column
+              SizedBox(
+                width: 80,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      startTimeStr,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
                       ),
                     ),
-                ],
-              ),
-            ),
-
-            // Vertical divider
-            Container(
-              width: 3,
-              height: 60,
-              margin: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: _getPriorityColor(block.task.priority),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-
-            // Task details
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    block.task.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-
-                  // Duration breakdown
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: [
-                      _buildChip(
-                        Icons.timer,
-                        '${block.durationMinutes} min',
-                        Colors.blue,
+                    Text(
+                      endTimeStr,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
                       ),
-                      if (block.includedTravelTime > 0)
-                        _buildChip(
-                          Icons.directions_car,
-                          '${block.includedTravelTime} min travel',
-                          Colors.orange,
+                    ),
+                    if (block.isSuggested)
+                      Container(
+                        margin: const EdgeInsets.only(top: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade100,
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                      if (block.task.location != null)
-                        _buildChip(
-                          Icons.location_on,
-                          _truncateLocation(block.task.location!),
-                          Colors.green,
+                        child: const Text(
+                          'Suggested',
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
                         ),
-                    ],
-                  ),
-                ],
+                      ),
+                  ],
+                ),
               ),
-            ),
 
-            // Priority indicator
-            _buildPriorityBadge(block.task.priority),
-          ],
+              // Vertical divider
+              Container(
+                width: 3,
+                margin: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: _getPriorityColor(block.task.priority),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+
+              // Task details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      block.task.title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Duration breakdown
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: [
+                        _buildChip(
+                          Icons.timer,
+                          '${block.durationMinutes} min',
+                          Colors.blue,
+                        ),
+                        if (block.includedTravelTime > 0)
+                          _buildChip(
+                            Icons.directions_car,
+                            '${block.includedTravelTime} min travel',
+                            Colors.orange,
+                          ),
+                        if (block.task.location != null)
+                          _buildChip(
+                            Icons.location_on,
+                            _truncateLocation(block.task.location!),
+                            Colors.green,
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Priority indicator
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: _buildPriorityBadge(block.task.priority),
+              ),
+            ],
+          ),
         ),
       ),
     );
