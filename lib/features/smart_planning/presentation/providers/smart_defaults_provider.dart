@@ -30,15 +30,16 @@ class SmartDefaultsNotifier extends StateNotifier<SmartDefaults> {
   final Ref _ref;
 
   SmartDefaultsNotifier(this._ref) : super(const SmartDefaults()) {
-    _analyzePatterns();
+    // Don't analyze in constructor - will be called when needed
   }
 
   /// Analyze historical todos to find patterns
   Future<void> _analyzePatterns() async {
-    final todosAsync = _ref.read(todosProvider);
-    final todos = todosAsync.value ?? [];
+    try {
+      final todosAsync = _ref.read(todosProvider);
+      final todos = todosAsync.value ?? [];
 
-    if (todos.isEmpty) return;
+      if (todos.isEmpty) return;
 
     // Only analyze completed todos (they represent actual behavior)
     final completedTodos = todos.where((t) => t.isCompleted).toList();
@@ -127,8 +128,12 @@ class SmartDefaultsNotifier extends StateNotifier<SmartDefaults> {
       weekdayPatterns: weekdayPatterns,
     );
 
-    print('📊 [SMART DEFAULTS] Analyzed ${completedTodos.length} completed todos');
-    print('📊 [SMART DEFAULTS] Found patterns for ${commonTimes.length} task types');
+      print('📊 [SMART DEFAULTS] Analyzed ${completedTodos.length} completed todos');
+      print('📊 [SMART DEFAULTS] Found patterns for ${commonTimes.length} task types');
+    } catch (e) {
+      print('🔴 [SMART DEFAULTS] Error analyzing patterns: $e');
+      // Don't crash the app, just skip pattern analysis
+    }
   }
 
   /// Get suggested time for a task type
