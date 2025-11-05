@@ -202,107 +202,119 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
         data: (todos) {
           final selectedDayTodos = _getTodosForDay(todos, _selectedDay ?? DateTime.now());
 
-          return Column(
-            children: [
+          return CustomScrollView(
+            slivers: [
               // Calendar Widget
-              Card(
-                margin: const EdgeInsets.all(8),
-                child: TableCalendar(
-                  firstDay: DateTime.utc(2020, 1, 1),
-                  lastDay: DateTime.utc(2030, 12, 31),
-                  focusedDay: _focusedDay,
-                  calendarFormat: _calendarFormat,
-                  selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-                  onDaySelected: (selectedDay, focusedDay) {
-                    setState(() {
-                      _selectedDay = selectedDay;
+              SliverToBoxAdapter(
+                child: Card(
+                  margin: const EdgeInsets.all(8),
+                  child: TableCalendar(
+                    firstDay: DateTime.utc(2020, 1, 1),
+                    lastDay: DateTime.utc(2030, 12, 31),
+                    focusedDay: _focusedDay,
+                    calendarFormat: _calendarFormat,
+                    selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                    onDaySelected: (selectedDay, focusedDay) {
+                      setState(() {
+                        _selectedDay = selectedDay;
+                        _focusedDay = focusedDay;
+                      });
+                      // Analyze the newly selected day
+                      _analyzeSelectedDay(todos);
+                    },
+                    onFormatChanged: (format) {
+                      setState(() {
+                        _calendarFormat = format;
+                      });
+                    },
+                    onPageChanged: (focusedDay) {
                       _focusedDay = focusedDay;
-                    });
-                    // Analyze the newly selected day
-                    _analyzeSelectedDay(todos);
-                  },
-                  onFormatChanged: (format) {
-                    setState(() {
-                      _calendarFormat = format;
-                    });
-                  },
-                  onPageChanged: (focusedDay) {
-                    _focusedDay = focusedDay;
-                  },
-                  eventLoader: (day) => _getTodosForDay(todos, day),
-                  calendarStyle: CalendarStyle(
-                    todayDecoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-                      shape: BoxShape.circle,
-                    ),
-                    selectedDecoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary,
-                      shape: BoxShape.circle,
-                    ),
-                    markerDecoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.secondary,
-                      shape: BoxShape.circle,
+                    },
+                    eventLoader: (day) => _getTodosForDay(todos, day),
+                    calendarStyle: CalendarStyle(
+                      todayDecoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      selectedDecoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      markerDecoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.secondary,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
                 ),
               ),
 
               // Selected Date Header
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _selectedDay != null
-                          ? DateFormat('EEEE, MMMM d').format(_selectedDay!)
-                          : 'Select a date',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    Text(
-                      '${selectedDayTodos.length} tasks',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.grey,
-                          ),
-                    ),
-                  ],
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _selectedDay != null
+                            ? DateFormat('EEEE, MMMM d').format(_selectedDay!)
+                            : 'Select a date',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      Text(
+                        '${selectedDayTodos.length} tasks',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey,
+                            ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
-              const Divider(height: 1),
+              // Divider
+              const SliverToBoxAdapter(
+                child: Divider(height: 1),
+              ),
 
               // Plan My Day Button
               if (selectedDayTodos.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => DailyPlanningPage(
-                            selectedDate: _selectedDay ?? DateTime.now(),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DailyPlanningPage(
+                              selectedDate: _selectedDay ?? DateTime.now(),
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.auto_awesome),
-                    label: const Text('Plan My Day'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade700,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 48),
+                        );
+                      },
+                      icon: const Icon(Icons.auto_awesome),
+                      label: const Text('Plan My Day'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue.shade700,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 48),
+                      ),
                     ),
                   ),
                 ),
 
               // Smart Suggestions
-              const SmartSuggestionsCard(),
+              const SliverToBoxAdapter(
+                child: SmartSuggestionsCard(),
+              ),
 
-              // Todos List
-              Expanded(
-                child: selectedDayTodos.isEmpty
-                    ? Center(
+              // Todos List or Empty State
+              selectedDayTodos.isEmpty
+                  ? SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -320,21 +332,25 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                             ),
                           ],
                         ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(8),
-                        itemCount: selectedDayTodos.length,
-                        itemBuilder: (context, index) {
-                          final todo = selectedDayTodos[index];
-                          return TodoListItem(
-                            todo: todo,
-                            isSelectionMode: _isSelectionMode,
-                            isSelected: _selectedTodoIds.contains(todo.id),
-                            onSelectionChanged: () => _toggleTodoSelection(todo.id),
-                          );
-                        },
                       ),
-              ),
+                    )
+                  : SliverPadding(
+                      padding: const EdgeInsets.all(8),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final todo = selectedDayTodos[index];
+                            return TodoListItem(
+                              todo: todo,
+                              isSelectionMode: _isSelectionMode,
+                              isSelected: _selectedTodoIds.contains(todo.id),
+                              onSelectionChanged: () => _toggleTodoSelection(todo.id),
+                            );
+                          },
+                          childCount: selectedDayTodos.length,
+                        ),
+                      ),
+                    ),
             ],
           );
         },
