@@ -3,8 +3,8 @@ import 'package:equatable/equatable.dart';
 /// Represents a family member in the family planner
 class FamilyMemberEntity extends Equatable {
   final String id;
-  final String userId; // Links to auth user
-  final String familyId; // All members share same familyId
+  final String userId; // Firebase Auth UID - unique per user account
+  final String familyId; // Links to family entity
   final String name;
   final String? email;
   final String? avatarUrl;
@@ -13,6 +13,7 @@ class FamilyMemberEntity extends Equatable {
   final String? color; // Hex color for calendar display
   final DateTime joinedAt;
   final bool isActive;
+  final String? deviceToken; // FCM token for push notifications
   final Map<String, dynamic>? preferences;
 
   const FamilyMemberEntity({
@@ -27,6 +28,7 @@ class FamilyMemberEntity extends Equatable {
     this.color,
     required this.joinedAt,
     this.isActive = true,
+    this.deviceToken,
     this.preferences,
   });
 
@@ -43,6 +45,7 @@ class FamilyMemberEntity extends Equatable {
         color,
         joinedAt,
         isActive,
+        deviceToken,
         preferences,
       ];
 
@@ -58,6 +61,7 @@ class FamilyMemberEntity extends Equatable {
     String? color,
     DateTime? joinedAt,
     bool? isActive,
+    String? deviceToken,
     Map<String, dynamic>? preferences,
   }) {
     return FamilyMemberEntity(
@@ -72,6 +76,7 @@ class FamilyMemberEntity extends Equatable {
       color: color ?? this.color,
       joinedAt: joinedAt ?? this.joinedAt,
       isActive: isActive ?? this.isActive,
+      deviceToken: deviceToken ?? this.deviceToken,
       preferences: preferences ?? this.preferences,
     );
   }
@@ -89,6 +94,7 @@ class FamilyMemberEntity extends Equatable {
       'color': color,
       'joinedAt': joinedAt.toIso8601String(),
       'isActive': isActive,
+      'deviceToken': deviceToken,
       'preferences': preferences,
     };
   }
@@ -109,6 +115,7 @@ class FamilyMemberEntity extends Equatable {
       color: json['color'] as String?,
       joinedAt: DateTime.parse(json['joinedAt'] as String),
       isActive: json['isActive'] as bool? ?? true,
+      deviceToken: json['deviceToken'] as String?,
       preferences: json['preferences'] as Map<String, dynamic>?,
     );
   }

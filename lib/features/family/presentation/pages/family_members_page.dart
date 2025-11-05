@@ -5,6 +5,8 @@ import '../providers/family_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../widgets/add_family_member_dialog.dart';
 import '../widgets/family_member_card.dart';
+import '../widgets/create_family_dialog.dart';
+import 'join_family_page.dart';
 
 /// Page to manage family members
 class FamilyMembersPage extends ConsumerStatefulWidget {
@@ -126,27 +128,127 @@ class _FamilyMembersPageState extends ConsumerState<FamilyMembersPage> {
                 )
               : familyState.members.isEmpty
                   ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.people_outline, size: 64, color: Colors.grey[300]),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'No family members yet',
-                            style: TextStyle(fontSize: 18, color: Colors.grey),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Add family members to share tasks',
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
-                          ),
-                          const SizedBox(height: 24),
-                          ElevatedButton.icon(
-                            onPressed: _showAddMemberDialog,
-                            icon: const Icon(Icons.person_add),
-                            label: const Text('Add First Member'),
-                          ),
-                        ],
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.family_restroom, size: 80, color: Colors.grey[300]),
+                            const SizedBox(height: 24),
+                            const Text(
+                              'No Family Yet',
+                              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Start collaborating with your family',
+                              style: TextStyle(fontSize: 16, color: Colors.grey),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 32),
+
+                            // Create Family Button
+                            FilledButton.icon(
+                              onPressed: () async {
+                                final result = await showDialog(
+                                  context: context,
+                                  builder: (context) => const CreateFamilyDialog(),
+                                );
+                                if (result == true) {
+                                  _loadFamilyMembers();
+                                }
+                              },
+                              icon: const Icon(Icons.add),
+                              label: const Text('Create New Family'),
+                              style: FilledButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 32,
+                                  vertical: 16,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Or Divider
+                            Row(
+                              children: [
+                                const Expanded(child: Divider()),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  child: Text(
+                                    'OR',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                const Expanded(child: Divider()),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Join Family Button
+                            OutlinedButton.icon(
+                              onPressed: () async {
+                                final result = await Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => const JoinFamilyPage(),
+                                  ),
+                                );
+                                if (result == true) {
+                                  _loadFamilyMembers();
+                                }
+                              },
+                              icon: const Icon(Icons.group_add),
+                              label: const Text('Join Existing Family'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 32,
+                                  vertical: 16,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+
+                            // Info Card
+                            Card(
+                              color: Colors.blue[50],
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(Icons.lightbulb_outline, color: Colors.blue[700]),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Getting Started',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.blue[700],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      '• Create a family if you\'re the first one\n'
+                                      '• Share the invite code with family\n'
+                                      '• Others join using the code\n'
+                                      '• Start assigning and sharing tasks!',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.blue[900],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     )
                   : ListView(

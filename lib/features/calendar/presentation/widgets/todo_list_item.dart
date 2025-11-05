@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../../../../core/themes/app_theme.dart';
 import '../../../todos/domain/entities/todo_entity.dart';
 import '../../../todos/presentation/providers/todo_providers.dart';
+import '../../../todos/services/providers/todo_notification_provider.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import 'add_todo_dialog.dart';
 
 class TodoListItem extends ConsumerWidget {
@@ -138,7 +140,22 @@ class TodoListItem extends ConsumerWidget {
               value: todo.isCompleted,
               onChanged: (value) async {
                 try {
+                  // Check if task is being completed (not uncompleted)
+                  final wasCompleted = todo.isCompleted;
+
                   await ref.read(todosProvider.notifier).toggleTodoStatus(todo.id);
+
+                  // Send notification if task was just completed
+                  if (!wasCompleted && value == true) {
+                    final user = ref.read(currentUserProvider).value;
+                    if (user != null) {
+                      final notificationService = ref.read(todoNotificationServiceProvider);
+                      await notificationService.notifyTaskCompleted(
+                        todo: todo,
+                        completedByName: user.fullName ?? 'Someone',
+                      );
+                    }
+                  }
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(

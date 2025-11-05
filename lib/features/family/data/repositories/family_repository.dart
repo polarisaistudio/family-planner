@@ -270,6 +270,7 @@ class FamilyRepository {
       'color': member.color != null ? {'stringValue': member.color} : {'nullValue': null},
       'joinedAt': {'timestampValue': member.joinedAt.toUtc().toIso8601String()},
       'isActive': {'booleanValue': member.isActive},
+      'deviceToken': member.deviceToken != null ? {'stringValue': member.deviceToken} : {'nullValue': null},
     };
   }
 
@@ -291,6 +292,7 @@ class FamilyRepository {
       color: _getStringValue(fields['color']),
       joinedAt: DateTime.parse(_getStringValue(fields['joinedAt']) ?? DateTime.now().toIso8601String()),
       isActive: fields['isActive']?['booleanValue'] as bool? ?? true,
+      deviceToken: _getStringValue(fields['deviceToken']),
     );
   }
 

@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import '../../../../core/constants/app_constants.dart';
 import '../../../todos/domain/entities/todo_entity.dart';
 import '../../../todos/presentation/providers/todo_providers.dart';
+import '../../../todos/services/providers/todo_notification_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../shared/utils/recurrence_helper.dart';
 import '../../../family/presentation/providers/family_provider.dart';
@@ -352,6 +353,17 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
       if (isEditing) {
         // Update existing todo
         await ref.read(todosProvider.notifier).updateTodo(todo);
+
+        // Send notification if assignment changed
+        final oldTodo = widget.todoToEdit;
+        if (oldTodo!.assignedToId != todo.assignedToId && todo.assignedToId != null) {
+          final notificationService = ref.read(todoNotificationServiceProvider);
+          await notificationService.notifyTaskAssigned(
+            todo: todo,
+            assignedToId: todo.assignedToId!,
+            assignedByName: user.fullName ?? 'Someone',
+          );
+        }
       } else if (_isRecurring) {
         // Generate recurring instances for the next 365 days
         final endDate = _recurrenceEndDate ?? normalizedDate.add(const Duration(days: 365));
@@ -369,6 +381,16 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
         print('🟢 [ADD TODO] Batch creation complete');
       } else {
         await ref.read(todosProvider.notifier).createTodo(todo);
+
+        // Send notification if task is assigned to someone
+        if (todo.assignedToId != null) {
+          final notificationService = ref.read(todoNotificationServiceProvider);
+          await notificationService.notifyTaskAssigned(
+            todo: todo,
+            assignedToId: todo.assignedToId!,
+            assignedByName: user.fullName ?? 'Someone',
+          );
+        }
       }
 
       if (!mounted) return;

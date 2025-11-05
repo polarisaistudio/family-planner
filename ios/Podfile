@@ -4,6 +4,9 @@ platform :ios, '15.0'
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
+# Define Firebase SDK version for firebase_core and firebase_messaging
+$FirebaseSDKVersion = '11.5.0'
+
 project 'Runner', {
   'Debug' => :debug,
   'Profile' => :release,
@@ -32,7 +35,8 @@ system("cd #{__dir__} && ./fix_ios_plugins.sh")
 
 def should_exclude_plugin?(plugin_name)
   # Exclude Firebase plugins - we use REST API on iOS
-  firebase_plugins = ['firebase_core', 'firebase_auth', 'cloud_firestore']
+  # But allow firebase_messaging since it requires native SDK
+  firebase_plugins = ['firebase_auth', 'cloud_firestore']
   firebase_plugins.include?(plugin_name)
 end
 
@@ -53,7 +57,7 @@ def flutter_install_ios_pods_without_firebase(ios_application_path = nil)
   ios_plugins.each do |plugin|
     plugin_name = plugin['name']
 
-    # Skip Firebase plugins
+    # Skip Firebase plugins (except core and messaging)
     if should_exclude_plugin?(plugin_name)
       puts "⏭️  Skipping Firebase plugin: #{plugin_name} (using REST API instead)"
       next

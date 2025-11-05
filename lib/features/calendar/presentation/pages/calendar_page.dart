@@ -13,11 +13,20 @@ import '../../../smart_planning/presentation/pages/daily_planning_page.dart';
 import '../../../family/presentation/pages/family_members_page.dart';
 
 class CalendarPage extends ConsumerStatefulWidget {
-  const CalendarPage({super.key});
+  final String? initialTaskId;
+  final bool shouldOpenTask;
+
+  const CalendarPage({
+    super.key,
+    this.initialTaskId,
+    this.shouldOpenTask = false,
+  });
 
   @override
   ConsumerState<CalendarPage> createState() => _CalendarPageState();
 }
+
+enum TaskFilter { all, myTasks }
 
 class _CalendarPageState extends ConsumerState<CalendarPage> {
   DateTime _focusedDay = DateTime.now();
@@ -25,11 +34,80 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   bool _isSelectionMode = false;
   final Set<String> _selectedTodoIds = {};
+  TaskFilter _taskFilter = TaskFilter.all;
 
   @override
   void initState() {
     super.initState();
     _selectedDay = _focusedDay;
+
+    // Open task dialog after the widget is built if navigated from notification
+    if (widget.shouldOpenTask && widget.initialTaskId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _openTaskFromNotification(widget.initialTaskId!);
+      });
+    }
+  }
+
+  /// Open task dialog when navigating from a notification
+  void _openTaskFromNotification(String taskId) async {
+    try {
+      print('📋 Opening task from notification: $taskId');
+
+      // Get all todos to find the one with matching ID
+      final todosAsyncValue = ref.read(todosProvider);
+
+      todosAsyncValue.when(
+        data: (todos) {
+          final task = todos.firstWhere(
+            (todo) => todo.id == taskId,
+            orElse: () => throw Exception('Task not found'),
+          );
+
+          // Open the task edit dialog
+          if (mounted) {
+            showDialog(
+              context: context,
+              builder: (context) => AddTodoDialog(
+                selectedDate: task.todoDate,
+                todoToEdit: task,
+              ),
+            );
+          }
+        },
+        loading: () {
+          print('⏳ Todos still loading...');
+          // Retry after a short delay
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              _openTaskFromNotification(taskId);
+            }
+          });
+        },
+        error: (error, stack) {
+          print('❌ Error loading todos: $error');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error loading tasks: $error'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        },
+      );
+    } catch (e) {
+      print('❌ Error opening task from notification: $e');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not find task: $e'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
   }
 
   void _toggleSelectionMode() {
@@ -119,6 +197,26 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
     }).toList();
   }
 
+  List<TodoEntity> _filterTodosByUser(List<TodoEntity> todos) {
+    if (_taskFilter == TaskFilter.all) {
+      return todos;
+    }
+
+    // Filter to show only tasks assigned to current user
+    final currentUser = ref.read(currentUserProvider).value;
+    if (currentUser == null) return todos;
+
+    return todos.where((todo) {
+      // Show task if:
+      // 1. It's assigned to the current user, OR
+      // 2. It's shared with the current user, OR
+      // 3. The user created it
+      return todo.assignedToId == currentUser.id ||
+             (todo.sharedWith?.contains(currentUser.id) ?? false) ||
+             todo.userId == currentUser.id;
+    }).toList();
+  }
+
   Future<void> _showAddTodoDialog() async {
     final dateToUse = _selectedDay ?? DateTime.now();
     print('🔵 [CALENDAR] Opening dialog with date: $dateToUse (day: ${dateToUse.day})');
@@ -151,6 +249,26 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                 tooltip: 'Delete selected',
               ),
           ] else ...[
+            // Filter toggle chip
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+              child: ChoiceChip(
+                label: Text(
+                  _taskFilter == TaskFilter.all ? 'All Tasks' : 'My Tasks',
+                  style: const TextStyle(fontSize: 12),
+                ),
+                selected: _taskFilter == TaskFilter.myTasks,
+                onSelected: (selected) {
+                  setState(() {
+                    _taskFilter = selected ? TaskFilter.myTasks : TaskFilter.all;
+                  });
+                },
+                avatar: Icon(
+                  _taskFilter == TaskFilter.all ? Icons.people : Icons.person,
+                  size: 18,
+                ),
+              ),
+            ),
             IconButton(
               icon: const Icon(Icons.checklist),
               onPressed: _toggleSelectionMode,
@@ -217,7 +335,9 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
       ),
       body: todosState.when(
         data: (todos) {
-          final selectedDayTodos = _getTodosForDay(todos, _selectedDay ?? DateTime.now());
+          // Apply user filter first
+          final filteredTodos = _filterTodosByUser(todos);
+          final selectedDayTodos = _getTodosForDay(filteredTodos, _selectedDay ?? DateTime.now());
 
           return CustomScrollView(
             slivers: [
@@ -247,7 +367,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                     onPageChanged: (focusedDay) {
                       _focusedDay = focusedDay;
                     },
-                    eventLoader: (day) => _getTodosForDay(todos, day),
+                    eventLoader: (day) => _getTodosForDay(filteredTodos, day),
                     calendarStyle: CalendarStyle(
                       todayDecoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
