@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/smart_planning_provider.dart';
 import '../providers/permission_provider.dart';
+import '../../data/services/notification_service.dart';
 
 /// Widget to display smart suggestions for todos
 class SmartSuggestionsCard extends ConsumerWidget {
@@ -199,18 +200,214 @@ class _SuggestionItem extends ConsumerWidget {
     }
   }
 
-  void _handleAction(BuildContext context, WidgetRef ref, SmartSuggestion suggestion) {
-    // TODO: Implement action handlers
-    // - For weather: Show detailed weather view
-    // - For location: Set location-based reminder
-    // - For preparation: Schedule notification
+  Future<void> _handleAction(BuildContext context, WidgetRef ref, SmartSuggestion suggestion) async {
+    try {
+      switch (suggestion.type) {
+        case 'weather':
+          // Show weather details
+          _showWeatherDetails(context, suggestion);
+          break;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Action: ${suggestion.actionText}'),
-        duration: const Duration(seconds: 2),
+        case 'location':
+          // Set location-based reminder
+          await _setLocationReminder(context, suggestion);
+          break;
+
+        case 'preparation':
+        case 'traffic':
+          // Schedule time-based notification
+          await _scheduleReminder(context, suggestion);
+          break;
+
+        default:
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Action: ${suggestion.actionText}'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _showWeatherDetails(BuildContext context, SmartSuggestion suggestion) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.wb_sunny, color: Colors.orange),
+            SizedBox(width: 8),
+            Text('Weather Details'),
+          ],
+        ),
+        content: Text(suggestion.message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
       ),
     );
+  }
+
+  Future<void> _setLocationReminder(BuildContext context, SmartSuggestion suggestion) async {
+    // Initialize notification service
+    final notificationService = NotificationService();
+    await notificationService.initialize();
+
+    // Schedule reminder
+    if (suggestion.suggestedTime != null) {
+      await notificationService.scheduleNotification(
+        id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        title: 'Time to Leave!',
+        body: suggestion.message,
+        scheduledTime: suggestion.suggestedTime!,
+      );
+
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Reminder set for ${_formatTime(suggestion.suggestedTime!)}'),
+          backgroundColor: Colors.green,
+          action: SnackBarAction(
+            label: 'OK',
+            textColor: Colors.white,
+            onPressed: () {},
+          ),
+        ),
+      );
+    } else {
+      // No specific time, show dialog to set custom time
+      if (!context.mounted) return;
+      _showSetReminderDialog(context, suggestion);
+    }
+  }
+
+  Future<void> _scheduleReminder(BuildContext context, SmartSuggestion suggestion) async {
+    if (suggestion.suggestedTime != null) {
+      final notificationService = NotificationService();
+      await notificationService.initialize();
+
+      await notificationService.scheduleNotification(
+        id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        title: suggestion.type == 'preparation' ? 'Time to Prepare' : 'Traffic Alert',
+        body: suggestion.message,
+        scheduledTime: suggestion.suggestedTime!,
+      );
+
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Reminder set for ${_formatTime(suggestion.suggestedTime!)}'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      if (!context.mounted) return;
+      _showSetReminderDialog(context, suggestion);
+    }
+  }
+
+  void _showSetReminderDialog(BuildContext context, SmartSuggestion suggestion) {
+    DateTime selectedDateTime = DateTime.now().add(const Duration(hours: 1));
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Set Reminder Time'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(suggestion.message),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.access_time),
+                title: const Text('Reminder Time'),
+                subtitle: Text(_formatDateTime(selectedDateTime)),
+                onTap: () async {
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: selectedDateTime,
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 30)),
+                  );
+                  if (date != null) {
+                    final time = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.fromDateTime(selectedDateTime),
+                    );
+                    if (time != null) {
+                      setState(() {
+                        selectedDateTime = DateTime(
+                          date.year,
+                          date.month,
+                          date.day,
+                          time.hour,
+                          time.minute,
+                        );
+                      });
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final notificationService = NotificationService();
+                await notificationService.initialize();
+
+                await notificationService.scheduleNotification(
+                  id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+                  title: 'Task Reminder',
+                  body: suggestion.message,
+                  scheduledTime: selectedDateTime,
+                );
+
+                Navigator.pop(context);
+
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Reminder set for ${_formatDateTime(selectedDateTime)}'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              },
+              child: const Text('Set Reminder'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatTime(DateTime time) {
+    final hour = time.hour.toString().padLeft(2, '0');
+    final minute = time.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
+  }
+
+  String _formatDateTime(DateTime time) {
+    final date = '${time.month}/${time.day}/${time.year}';
+    final timeStr = _formatTime(time);
+    return '$date at $timeStr';
   }
 }
 
