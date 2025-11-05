@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../todos/presentation/providers/todo_providers.dart';
 import '../../../todos/domain/entities/todo_entity.dart';
+import '../../../todos/domain/entities/category_entity.dart';
 import '../widgets/todo_list_item.dart';
 import '../widgets/add_todo_dialog.dart';
 import '../../../smart_planning/presentation/widgets/smart_suggestions_card.dart';
@@ -35,6 +36,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
   bool _isSelectionMode = false;
   final Set<String> _selectedTodoIds = {};
   TaskFilter _taskFilter = TaskFilter.all;
+  String? _categoryFilter; // null means show all categories
 
   @override
   void initState() {
@@ -198,23 +200,32 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
   }
 
   List<TodoEntity> _filterTodosByUser(List<TodoEntity> todos) {
-    if (_taskFilter == TaskFilter.all) {
-      return todos;
+    var filteredTodos = todos;
+
+    // Apply user filter
+    if (_taskFilter == TaskFilter.myTasks) {
+      final currentUser = ref.read(currentUserProvider).value;
+      if (currentUser != null) {
+        filteredTodos = filteredTodos.where((todo) {
+          // Show task if:
+          // 1. It's assigned to the current user, OR
+          // 2. It's shared with the current user, OR
+          // 3. The user created it
+          return todo.assignedToId == currentUser.id ||
+                 (todo.sharedWith?.contains(currentUser.id) ?? false) ||
+                 todo.userId == currentUser.id;
+        }).toList();
+      }
     }
 
-    // Filter to show only tasks assigned to current user
-    final currentUser = ref.read(currentUserProvider).value;
-    if (currentUser == null) return todos;
+    // Apply category filter
+    if (_categoryFilter != null) {
+      filteredTodos = filteredTodos.where((todo) {
+        return todo.category == _categoryFilter;
+      }).toList();
+    }
 
-    return todos.where((todo) {
-      // Show task if:
-      // 1. It's assigned to the current user, OR
-      // 2. It's shared with the current user, OR
-      // 3. The user created it
-      return todo.assignedToId == currentUser.id ||
-             (todo.sharedWith?.contains(currentUser.id) ?? false) ||
-             todo.userId == currentUser.id;
-    }).toList();
+    return filteredTodos;
   }
 
   Future<void> _showAddTodoDialog() async {
@@ -370,7 +381,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                     eventLoader: (day) => _getTodosForDay(filteredTodos, day),
                     calendarStyle: CalendarStyle(
                       todayDecoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
                         shape: BoxShape.circle,
                       ),
                       selectedDecoration: BoxDecoration(
@@ -405,6 +416,64 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                               color: Colors.grey,
                             ),
                       ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Category Filter
+              SliverToBoxAdapter(
+                child: Container(
+                  height: 60,
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      // All categories chip
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: FilterChip(
+                          label: const Text('All'),
+                          selected: _categoryFilter == null,
+                          onSelected: (selected) {
+                            setState(() {
+                              _categoryFilter = null;
+                            });
+                          },
+                          avatar: _categoryFilter == null
+                              ? const Icon(Icons.check, size: 16)
+                              : null,
+                        ),
+                      ),
+                      // Category chips
+                      ...PredefinedCategories.categories.map((category) {
+                        final isSelected = _categoryFilter == category.id;
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: FilterChip(
+                            label: Text(category.name),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              setState(() {
+                                _categoryFilter = selected ? category.id : null;
+                              });
+                            },
+                            avatar: Icon(
+                              IconData(category.iconCodePoint, fontFamily: 'MaterialIcons'),
+                              size: 16,
+                              color: isSelected
+                                  ? Colors.white
+                                  : Color(category.colorValue),
+                            ),
+                            backgroundColor: Color(category.colorValue).withValues(alpha: 0.1),
+                            selectedColor: Color(category.colorValue),
+                            checkmarkColor: Colors.white,
+                            labelStyle: TextStyle(
+                              color: isSelected ? Colors.white : Color(category.colorValue),
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     ],
                   ),
                 ),

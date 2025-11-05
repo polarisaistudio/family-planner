@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/themes/app_theme.dart';
 import '../../../todos/domain/entities/todo_entity.dart';
+import '../../../todos/domain/entities/category_entity.dart';
 import '../../../todos/presentation/providers/todo_providers.dart';
 import '../../../todos/services/providers/todo_notification_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -41,9 +42,17 @@ class TodoListItem extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final priorityColor = AppTheme.getPriorityColor(todo.priority);
 
+    // Get category if exists
+    CategoryEntity? category;
+    if (todo.category != null) {
+      category = PredefinedCategories.categories
+          .where((c) => c.id == todo.category)
+          .firstOrNull;
+    }
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      color: isSelected ? Theme.of(context).colorScheme.primary.withOpacity(0.1) : null,
+      color: isSelected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1) : null,
       child: ListTile(
         onTap: () {
           if (isSelectionMode) {
@@ -64,13 +73,23 @@ class TodoListItem extends ConsumerWidget {
                 value: isSelected,
                 onChanged: (_) => onSelectionChanged?.call(),
               )
-            : Container(
-          width: 4,
-          decoration: BoxDecoration(
-            color: priorityColor,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
+            : category != null
+                ? CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Color(category.colorValue).withValues(alpha: 0.2),
+                    child: Icon(
+                      IconData(category.iconCodePoint, fontFamily: 'MaterialIcons'),
+                      color: Color(category.colorValue),
+                      size: 20,
+                    ),
+                  )
+                : Container(
+                    width: 4,
+                    decoration: BoxDecoration(
+                      color: priorityColor,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
         title: Text(
           todo.title,
           style: TextStyle(
@@ -111,6 +130,46 @@ class TodoListItem extends ConsumerWidget {
                 ],
               ],
             ),
+            // Display tags
+            if (todo.tags != null && todo.tags!.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 4,
+                runSpacing: 4,
+                children: todo.tags!.take(3).map((tag) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.secondaryContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      tag,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Theme.of(context).colorScheme.onSecondaryContainer,
+                      ),
+                    ),
+                  );
+                }).toList()
+                  ..addAll(
+                    todo.tags!.length > 3
+                        ? [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              child: Text(
+                                '+${todo.tags!.length - 3}',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
+                          ]
+                        : [],
+                  ),
+              ),
+            ],
           ],
         ),
         trailing: isSelectionMode
@@ -122,7 +181,7 @@ class TodoListItem extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: priorityColor.withOpacity(0.2),
+                color: priorityColor.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(

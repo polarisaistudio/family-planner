@@ -46,6 +46,16 @@ class TodoEntity extends Equatable {
   final String? completedByName; // Cached name
   final int commentsCount; // Number of comments
 
+  // Phase 4: Enhanced Task Management fields
+  final String? category; // Category ID (work, personal, shopping, etc.)
+  final List<String>? tags; // Custom tags for filtering
+  final List<String>? subtaskIds; // IDs of subtasks (stored separately)
+  final int subtasksTotal; // Total number of subtasks
+  final int subtasksCompleted; // Number of completed subtasks
+  final String? templateId; // If created from template
+  final bool priorityAutoAdjusted; // Was priority auto-adjusted?
+  final DateTime? priorityAdjustedAt; // When priority was last adjusted
+
   const TodoEntity({
     required this.id,
     required this.userId,
@@ -87,6 +97,15 @@ class TodoEntity extends Equatable {
     this.completedById,
     this.completedByName,
     this.commentsCount = 0,
+    // Enhanced Task Management fields with defaults
+    this.category,
+    this.tags,
+    this.subtaskIds,
+    this.subtasksTotal = 0,
+    this.subtasksCompleted = 0,
+    this.templateId,
+    this.priorityAutoAdjusted = false,
+    this.priorityAdjustedAt,
   });
 
   @override
@@ -131,6 +150,15 @@ class TodoEntity extends Equatable {
         completedById,
         completedByName,
         commentsCount,
+        // Enhanced Task Management fields
+        category,
+        tags,
+        subtaskIds,
+        subtasksTotal,
+        subtasksCompleted,
+        templateId,
+        priorityAutoAdjusted,
+        priorityAdjustedAt,
       ];
 
   /// Check if todo is completed
@@ -207,6 +235,15 @@ class TodoEntity extends Equatable {
       'completedById': completedById,
       'completedByName': completedByName,
       'commentsCount': commentsCount,
+      // Enhanced Task Management fields
+      'category': category,
+      'tags': tags,
+      'subtaskIds': subtaskIds,
+      'subtasksTotal': subtasksTotal,
+      'subtasksCompleted': subtasksCompleted,
+      'templateId': templateId,
+      'priorityAutoAdjusted': priorityAutoAdjusted,
+      'priorityAdjustedAt': priorityAdjustedAt?.toIso8601String(),
     };
   }
 
@@ -253,6 +290,15 @@ class TodoEntity extends Equatable {
       completedById: json['completedById'] as String?,
       completedByName: json['completedByName'] as String?,
       commentsCount: json['commentsCount'] as int? ?? 0,
+      // Enhanced Task Management fields
+      category: json['category'] as String?,
+      tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      subtaskIds: (json['subtaskIds'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      subtasksTotal: json['subtasksTotal'] as int? ?? 0,
+      subtasksCompleted: json['subtasksCompleted'] as int? ?? 0,
+      templateId: json['templateId'] as String?,
+      priorityAutoAdjusted: json['priorityAutoAdjusted'] as bool? ?? false,
+      priorityAdjustedAt: json['priorityAdjustedAt'] != null ? DateTime.parse(json['priorityAdjustedAt'] as String) : null,
     );
   }
 
@@ -298,6 +344,15 @@ class TodoEntity extends Equatable {
     String? completedById,
     String? completedByName,
     int? commentsCount,
+    // Enhanced Task Management fields
+    String? category,
+    List<String>? tags,
+    List<String>? subtaskIds,
+    int? subtasksTotal,
+    int? subtasksCompleted,
+    String? templateId,
+    bool? priorityAutoAdjusted,
+    DateTime? priorityAdjustedAt,
   }) {
     return TodoEntity(
       id: id ?? this.id,
@@ -341,6 +396,24 @@ class TodoEntity extends Equatable {
       completedById: completedById ?? this.completedById,
       completedByName: completedByName ?? this.completedByName,
       commentsCount: commentsCount ?? this.commentsCount,
+      // Enhanced Task Management fields
+      category: category ?? this.category,
+      tags: tags ?? this.tags,
+      subtaskIds: subtaskIds ?? this.subtaskIds,
+      subtasksTotal: subtasksTotal ?? this.subtasksTotal,
+      subtasksCompleted: subtasksCompleted ?? this.subtasksCompleted,
+      templateId: templateId ?? this.templateId,
+      priorityAutoAdjusted: priorityAutoAdjusted ?? this.priorityAutoAdjusted,
+      priorityAdjustedAt: priorityAdjustedAt ?? this.priorityAdjustedAt,
     );
   }
+
+  /// Get subtask completion percentage
+  double get subtaskCompletionPercentage {
+    if (subtasksTotal == 0) return 0;
+    return subtasksCompleted / subtasksTotal;
+  }
+
+  /// Check if task has subtasks
+  bool get hasSubtasks => subtasksTotal > 0;
 }

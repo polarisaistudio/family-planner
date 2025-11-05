@@ -13,6 +13,8 @@ import '../../../todos/services/providers/todo_notification_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../shared/utils/recurrence_helper.dart';
 import '../../../family/presentation/providers/family_provider.dart';
+import 'category_picker_widget.dart';
+import 'tag_input_widget.dart';
 
 class AddTodoDialog extends ConsumerStatefulWidget {
   final DateTime selectedDate;
@@ -65,6 +67,10 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
   String? _assignedToName;
   List<String> _sharedWith = [];
 
+  // Phase 4: Enhanced Task Management fields
+  String? _category;
+  List<String> _tags = [];
+
   @override
   void initState() {
     super.initState();
@@ -96,6 +102,8 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
       _assignedToId = todo.assignedToId;
       _assignedToName = todo.assignedToName;
       _sharedWith = todo.sharedWith ?? [];
+      _category = todo.category;
+      _tags = todo.tags ?? [];
     }
 
     // Load family members when dialog opens
@@ -348,6 +356,15 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
         assignedToId: _assignedToId,
         assignedToName: _assignedToName,
         sharedWith: _sharedWith.isEmpty ? null : _sharedWith,
+        // Phase 4: Enhanced Task Management fields
+        category: _category,
+        tags: _tags.isEmpty ? null : _tags,
+        subtaskIds: null,
+        subtasksTotal: 0,
+        subtasksCompleted: 0,
+        templateId: null,
+        priorityAutoAdjusted: false,
+        priorityAdjustedAt: null,
       );
 
       if (isEditing) {
@@ -649,6 +666,24 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                     if (value != null) {
                       setState(() => _priority = value);
                     }
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // Category Picker
+                CategoryPickerWidget(
+                  selectedCategoryId: _category,
+                  onCategorySelected: (categoryId) {
+                    setState(() => _category = categoryId);
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // Tag Input
+                TagInputWidget(
+                  tags: _tags,
+                  onTagsChanged: (tags) {
+                    setState(() => _tags = tags);
                   },
                 ),
                 const SizedBox(height: 16),
