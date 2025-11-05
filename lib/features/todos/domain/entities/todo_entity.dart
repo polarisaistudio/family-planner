@@ -164,6 +164,98 @@ class TodoEntity extends Equatable {
     );
   }
 
+  /// Convert entity to JSON for Firestore
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'userId': userId,
+      'title': title,
+      'description': description,
+      'todoDate': todoDate.toIso8601String(),
+      'todoTime': todoTime?.toIso8601String(),
+      'priority': priority,
+      'type': type,
+      'status': status,
+      'location': location,
+      'locationLat': locationLat,
+      'locationLng': locationLng,
+      'notificationEnabled': notificationEnabled,
+      'notificationMinutesBefore': notificationMinutesBefore,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+      // Phase 2 fields
+      'travelTimeMinutes': travelTimeMinutes,
+      'geofenceRadiusMeters': geofenceRadiusMeters,
+      'weatherDependent': weatherDependent,
+      'trafficAware': trafficAware,
+      'preparationTimeMinutes': preparationTimeMinutes,
+      'lastTrafficCheck': lastTrafficCheck?.toIso8601String(),
+      'lastWeatherCheck': lastWeatherCheck?.toIso8601String(),
+      'estimatedDepartureTime': estimatedDepartureTime?.toIso8601String(),
+      // Recurrence fields
+      'isRecurring': isRecurring,
+      'recurrencePattern': recurrencePattern,
+      'recurrenceInterval': recurrenceInterval,
+      'recurrenceWeekdays': recurrenceWeekdays,
+      'recurrenceEndDate': recurrenceEndDate?.toIso8601String(),
+      'recurrenceParentId': recurrenceParentId,
+      'isRecurrenceInstance': isRecurrenceInstance,
+      // Family Collaboration fields
+      'assignedToId': assignedToId,
+      'assignedToName': assignedToName,
+      'sharedWith': sharedWith,
+      'completedById': completedById,
+      'completedByName': completedByName,
+      'commentsCount': commentsCount,
+    };
+  }
+
+  /// Create entity from JSON
+  factory TodoEntity.fromJson(Map<String, dynamic> json) {
+    return TodoEntity(
+      id: json['id'] as String,
+      userId: json['userId'] as String,
+      title: json['title'] as String,
+      description: json['description'] as String?,
+      todoDate: DateTime.parse(json['todoDate'] as String),
+      todoTime: json['todoTime'] != null ? DateTime.parse(json['todoTime'] as String) : null,
+      priority: json['priority'] as int? ?? 3,
+      type: json['type'] as String? ?? 'other',
+      status: json['status'] as String? ?? 'pending',
+      location: json['location'] as String?,
+      locationLat: json['locationLat'] as double?,
+      locationLng: json['locationLng'] as double?,
+      notificationEnabled: json['notificationEnabled'] as bool? ?? true,
+      notificationMinutesBefore: json['notificationMinutesBefore'] as int? ?? 30,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      // Phase 2 fields
+      travelTimeMinutes: json['travelTimeMinutes'] as int? ?? 0,
+      geofenceRadiusMeters: json['geofenceRadiusMeters'] as int? ?? 500,
+      weatherDependent: json['weatherDependent'] as bool? ?? false,
+      trafficAware: json['trafficAware'] as bool? ?? true,
+      preparationTimeMinutes: json['preparationTimeMinutes'] as int? ?? 15,
+      lastTrafficCheck: json['lastTrafficCheck'] != null ? DateTime.parse(json['lastTrafficCheck'] as String) : null,
+      lastWeatherCheck: json['lastWeatherCheck'] != null ? DateTime.parse(json['lastWeatherCheck'] as String) : null,
+      estimatedDepartureTime: json['estimatedDepartureTime'] != null ? DateTime.parse(json['estimatedDepartureTime'] as String) : null,
+      // Recurrence fields
+      isRecurring: json['isRecurring'] as bool? ?? false,
+      recurrencePattern: json['recurrencePattern'] as String?,
+      recurrenceInterval: json['recurrenceInterval'] as int?,
+      recurrenceWeekdays: (json['recurrenceWeekdays'] as List<dynamic>?)?.map((e) => e as int).toList(),
+      recurrenceEndDate: json['recurrenceEndDate'] != null ? DateTime.parse(json['recurrenceEndDate'] as String) : null,
+      recurrenceParentId: json['recurrenceParentId'] as String?,
+      isRecurrenceInstance: json['isRecurrenceInstance'] as bool? ?? false,
+      // Family Collaboration fields
+      assignedToId: json['assignedToId'] as String?,
+      assignedToName: json['assignedToName'] as String?,
+      sharedWith: (json['sharedWith'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      completedById: json['completedById'] as String?,
+      completedByName: json['completedByName'] as String?,
+      commentsCount: json['commentsCount'] as int? ?? 0,
+    );
+  }
+
   /// Create a copy with updated fields
   TodoEntity copyWith({
     String? id,

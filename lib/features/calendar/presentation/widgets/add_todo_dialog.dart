@@ -11,7 +11,7 @@ import '../../../todos/domain/entities/todo_entity.dart';
 import '../../../todos/presentation/providers/todo_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../shared/utils/recurrence_helper.dart';
-import '../../../smart_planning/presentation/providers/smart_defaults_provider.dart';
+import '../../../family/presentation/providers/family_provider.dart';
 
 class AddTodoDialog extends ConsumerStatefulWidget {
   final DateTime selectedDate;
@@ -59,6 +59,11 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
   List<int> _selectedWeekdays = [];
   DateTime? _recurrenceEndDate;
 
+  // Family collaboration fields
+  String? _assignedToId;
+  String? _assignedToName;
+  List<String> _sharedWith = [];
+
   @override
   void initState() {
     super.initState();
@@ -87,7 +92,18 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
       _recurrenceInterval = todo.recurrenceInterval ?? 1;
       _selectedWeekdays = todo.recurrenceWeekdays ?? [];
       _recurrenceEndDate = todo.recurrenceEndDate;
+      _assignedToId = todo.assignedToId;
+      _assignedToName = todo.assignedToName;
+      _sharedWith = todo.sharedWith ?? [];
     }
+
+    // Load family members when dialog opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = ref.read(currentUserProvider).value;
+      if (user != null) {
+        ref.read(familyMembersProvider.notifier).loadFamilyMembers(user.id);
+      }
+    });
   }
 
   @override
@@ -327,6 +343,10 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
             ? _selectedWeekdays
             : null,
         recurrenceEndDate: _isRecurring ? _recurrenceEndDate : null,
+        // Family collaboration fields
+        assignedToId: _assignedToId,
+        assignedToName: _assignedToName,
+        sharedWith: _sharedWith.isEmpty ? null : _sharedWith,
       );
 
       if (isEditing) {
@@ -610,6 +630,120 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                   },
                 ),
                 const SizedBox(height: 16),
+
+                // Family Collaboration Section
+                Consumer(
+                  builder: (context, ref, child) {
+                    final familyMembersState = ref.watch(familyMembersProvider);
+                    final members = familyMembersState.members;
+
+                    if (members.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Assign To dropdown
+                        DropdownButtonFormField<String?>(
+                          value: _assignedToId,
+                          decoration: const InputDecoration(
+                            labelText: 'Assign To',
+                            prefixIcon: Icon(Icons.person_add),
+                            helperText: 'Assign this task to a family member',
+                          ),
+                          items: [
+                            const DropdownMenuItem<String?>(
+                              value: null,
+                              child: Text('Not assigned'),
+                            ),
+                            ...members.map((member) {
+                              return DropdownMenuItem<String?>(
+                                value: member.id,
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 12,
+                                      backgroundColor: member.color != null
+                                          ? Color(int.parse(member.color!.substring(1), radix: 16) + 0xFF000000)
+                                          : Colors.blue,
+                                      child: Text(
+                                        member.name.substring(0, 1).toUpperCase(),
+                                        style: const TextStyle(fontSize: 10, color: Colors.white),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(member.name),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              _assignedToId = value;
+                              _assignedToName = value != null
+                                  ? members.firstWhere((m) => m.id == value).name
+                                  : null;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Share With section
+                        const Text(
+                          'Share With',
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: members.map((member) {
+                            final isShared = _sharedWith.contains(member.id);
+                            return FilterChip(
+                              label: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 10,
+                                    backgroundColor: member.color != null
+                                        ? Color(int.parse(member.color!.substring(1), radix: 16) + 0xFF000000)
+                                        : Colors.blue,
+                                    child: Text(
+                                      member.name.substring(0, 1).toUpperCase(),
+                                      style: const TextStyle(fontSize: 8, color: Colors.white),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(member.name),
+                                ],
+                              ),
+                              selected: isShared,
+                              onSelected: (selected) {
+                                setState(() {
+                                  if (selected) {
+                                    _sharedWith.add(member.id);
+                                  } else {
+                                    _sharedWith.remove(member.id);
+                                  }
+                                });
+                              },
+                            );
+                          }).toList(),
+                        ),
+                        if (_sharedWith.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            '${_sharedWith.length} ${_sharedWith.length == 1 ? 'person' : 'people'} can view/edit this task',
+                            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                          ),
+                        ],
+                        const SizedBox(height: 16),
+                      ],
+                    );
+                  },
+                ),
 
                 // Recurrence Section
                 SwitchListTile(

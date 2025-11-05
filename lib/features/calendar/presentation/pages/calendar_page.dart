@@ -10,6 +10,7 @@ import '../widgets/add_todo_dialog.dart';
 import '../../../smart_planning/presentation/widgets/smart_suggestions_card.dart';
 import '../../../smart_planning/presentation/providers/smart_planning_provider.dart';
 import '../../../smart_planning/presentation/pages/daily_planning_page.dart';
+import '../../../family/presentation/pages/family_members_page.dart';
 
 class CalendarPage extends ConsumerStatefulWidget {
   const CalendarPage({super.key});
@@ -166,6 +167,12 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
             onSelected: (value) async {
               if (value == 'logout') {
                 await ref.read(currentUserProvider.notifier).signOut();
+              } else if (value == 'family') {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const FamilyMembersPage(),
+                  ),
+                );
               }
             },
             itemBuilder: (context) => [
@@ -181,6 +188,16 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                         orElse: () => 'User',
                       ),
                     ),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'family',
+                child: Row(
+                  children: [
+                    Icon(Icons.people),
+                    SizedBox(width: 8),
+                    Text('Family Members'),
                   ],
                 ),
               ),
