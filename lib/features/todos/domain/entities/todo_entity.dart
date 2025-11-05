@@ -38,6 +38,14 @@ class TodoEntity extends Equatable {
   final String? recurrenceParentId; // Link to parent recurring task
   final bool isRecurrenceInstance; // Is this an instance of a recurring task?
 
+  // Phase 3: Family Collaboration fields
+  final String? assignedToId; // Family member assigned to this task
+  final String? assignedToName; // Cached name for display
+  final List<String>? sharedWith; // List of family member IDs who can see/edit
+  final String? completedById; // Who completed the task
+  final String? completedByName; // Cached name
+  final int commentsCount; // Number of comments
+
   const TodoEntity({
     required this.id,
     required this.userId,
@@ -72,6 +80,13 @@ class TodoEntity extends Equatable {
     this.recurrenceEndDate,
     this.recurrenceParentId,
     this.isRecurrenceInstance = false,
+    // Family Collaboration fields with defaults
+    this.assignedToId,
+    this.assignedToName,
+    this.sharedWith,
+    this.completedById,
+    this.completedByName,
+    this.commentsCount = 0,
   });
 
   @override
@@ -109,6 +124,13 @@ class TodoEntity extends Equatable {
         recurrenceEndDate,
         recurrenceParentId,
         isRecurrenceInstance,
+        // Family Collaboration fields
+        assignedToId,
+        assignedToName,
+        sharedWith,
+        completedById,
+        completedByName,
+        commentsCount,
       ];
 
   /// Check if todo is completed
@@ -177,6 +199,13 @@ class TodoEntity extends Equatable {
     DateTime? recurrenceEndDate,
     String? recurrenceParentId,
     bool? isRecurrenceInstance,
+    // Family Collaboration fields
+    String? assignedToId,
+    String? assignedToName,
+    List<String>? sharedWith,
+    String? completedById,
+    String? completedByName,
+    int? commentsCount,
   }) {
     return TodoEntity(
       id: id ?? this.id,
@@ -213,6 +242,13 @@ class TodoEntity extends Equatable {
       recurrenceEndDate: recurrenceEndDate ?? this.recurrenceEndDate,
       recurrenceParentId: recurrenceParentId ?? this.recurrenceParentId,
       isRecurrenceInstance: isRecurrenceInstance ?? this.isRecurrenceInstance,
+      // Family Collaboration fields
+      assignedToId: assignedToId ?? this.assignedToId,
+      assignedToName: assignedToName ?? this.assignedToName,
+      sharedWith: sharedWith ?? this.sharedWith,
+      completedById: completedById ?? this.completedById,
+      completedByName: completedByName ?? this.completedByName,
+      commentsCount: commentsCount ?? this.commentsCount,
     );
   }
 }
