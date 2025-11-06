@@ -82,6 +82,9 @@ dependencies:
   # Background tasks
   workmanager: ^0.5.1
 
+  # Translation
+  google_mlkit_translation: ^0.13.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -433,11 +433,11 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                       Text(
                         _selectedDay != null
                             ? DateFormat('EEEE, MMMM d').format(_selectedDay!)
-                            : 'Select a date',
+                            : l10n.selectDate,
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       Text(
-                        '${selectedDayTodos.length} tasks',
+                        l10n.tasks(selectedDayTodos.length),
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: Colors.grey,
                             ),
@@ -459,7 +459,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: FilterChip(
-                          label: const Text('All'),
+                          label: Text(l10n.all),
                           selected: _categoryFilter == null,
                           onSelected: (selected) {
                             setState(() {
@@ -527,7 +527,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                         );
                       },
                       icon: const Icon(Icons.auto_awesome),
-                      label: const Text('Plan My Day'),
+                      label: Text(l10n.planMyDay),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue.shade700,
                         foregroundColor: Colors.white,
@@ -557,7 +557,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              'No tasks for this day',
+                              l10n.noTasksForDay,
                               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                                     color: Colors.grey,
                                   ),
@@ -593,13 +593,13 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
             children: [
               const Icon(Icons.error_outline, size: 48, color: Colors.red),
               const SizedBox(height: 16),
-              Text('Error: $error'),
+              Text(l10n.errorWithMessage(error.toString())),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
                   ref.read(todosProvider.notifier).loadTodos();
                 },
-                child: const Text('Retry'),
+                child: Text(l10n.retry),
               ),
             ],
           ),

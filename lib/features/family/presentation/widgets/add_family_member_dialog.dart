@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../domain/entities/family_member_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class AddFamilyMemberDialog extends ConsumerStatefulWidget {
   final String familyId;
@@ -103,7 +104,7 @@ class _AddFamilyMemberDialogState extends ConsumerState<AddFamilyMemberDialog> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text(AppLocalizations.of(context)!.errorWithMessage(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -122,7 +123,7 @@ class _AddFamilyMemberDialogState extends ConsumerState<AddFamilyMemberDialog> {
     final isEditing = widget.memberToEdit != null;
 
     return AlertDialog(
-      title: Text(isEditing ? 'Edit Family Member' : 'Add Family Member'),
+      title: Text(isEditing ? AppLocalizations.of(context)!.editFamilyMember : AppLocalizations.of(context)!.addFamilyMember),
       content: SizedBox(
         width: MediaQuery.of(context).size.width * 0.9,
         child: SingleChildScrollView(
@@ -135,13 +136,13 @@ class _AddFamilyMemberDialogState extends ConsumerState<AddFamilyMemberDialog> {
               // Name field
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name *',
-                  prefixIcon: Icon(Icons.person),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.nameRequired,
+                  prefixIcon: const Icon(Icons.person),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a name';
+                    return AppLocalizations.of(context)!.pleaseEnterName;
                   }
                   return null;
                 },
@@ -152,14 +153,14 @@ class _AddFamilyMemberDialogState extends ConsumerState<AddFamilyMemberDialog> {
               // Email field
               TextFormField(
                 controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.email,
+                  prefixIcon: const Icon(Icons.email),
                 ),
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
                   if (value != null && value.isNotEmpty && !value.contains('@')) {
-                    return 'Please enter a valid email';
+                    return AppLocalizations.of(context)!.pleaseEnterValidEmail;
                   }
                   return null;
                 },
@@ -169,9 +170,9 @@ class _AddFamilyMemberDialogState extends ConsumerState<AddFamilyMemberDialog> {
               // Phone field
               TextFormField(
                 controller: _phoneController,
-                decoration: const InputDecoration(
-                  labelText: 'Phone',
-                  prefixIcon: Icon(Icons.phone),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.phone,
+                  prefixIcon: const Icon(Icons.phone),
                 ),
                 keyboardType: TextInputType.phone,
               ),
@@ -180,9 +181,9 @@ class _AddFamilyMemberDialogState extends ConsumerState<AddFamilyMemberDialog> {
               // Role dropdown
               DropdownButtonFormField<FamilyRole>(
                 value: _selectedRole,
-                decoration: const InputDecoration(
-                  labelText: 'Role',
-                  prefixIcon: Icon(Icons.admin_panel_settings),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.role,
+                  prefixIcon: const Icon(Icons.admin_panel_settings),
                 ),
                 items: FamilyRole.values.map((role) {
                   IconData icon;
@@ -190,15 +191,15 @@ class _AddFamilyMemberDialogState extends ConsumerState<AddFamilyMemberDialog> {
                   switch (role) {
                     case FamilyRole.admin:
                       icon = Icons.admin_panel_settings;
-                      label = 'Admin';
+                      label = AppLocalizations.of(context)!.admin;
                       break;
                     case FamilyRole.child:
                       icon = Icons.child_care;
-                      label = 'Child';
+                      label = AppLocalizations.of(context)!.child;
                       break;
                     case FamilyRole.member:
                       icon = Icons.person;
-                      label = 'Member';
+                      label = AppLocalizations.of(context)!.member;
                       break;
                   }
                   return DropdownMenuItem(
@@ -223,9 +224,9 @@ class _AddFamilyMemberDialogState extends ConsumerState<AddFamilyMemberDialog> {
               const SizedBox(height: 16),
 
               // Color picker
-              const Text(
-                'Color',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.color,
+                style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -269,8 +270,8 @@ class _AddFamilyMemberDialogState extends ConsumerState<AddFamilyMemberDialog> {
               // Active status switch
               if (isEditing)
                 SwitchListTile(
-                  title: const Text('Active'),
-                  subtitle: const Text('Member can access family features'),
+                  title: Text(AppLocalizations.of(context)!.active),
+                  subtitle: Text(AppLocalizations.of(context)!.memberCanAccess),
                   value: _isActive,
                   onChanged: (value) {
                     setState(() {
@@ -289,7 +290,7 @@ class _AddFamilyMemberDialogState extends ConsumerState<AddFamilyMemberDialog> {
           onPressed: _isSaving ? null : () {
             Navigator.of(context).pop();
           },
-          child: const Text('Cancel'),
+          child: Text(AppLocalizations.of(context)!.cancel),
         ),
         FilledButton(
           onPressed: _isSaving ? null : _handleSave,
@@ -299,7 +300,7 @@ class _AddFamilyMemberDialogState extends ConsumerState<AddFamilyMemberDialog> {
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : Text(isEditing ? 'Save' : 'Add'),
+              : Text(isEditing ? AppLocalizations.of(context)!.save : AppLocalizations.of(context)!.add),
         ),
       ],
     );

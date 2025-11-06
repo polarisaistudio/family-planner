@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:http/http.dart' as http;
 import '../../../../core/constants/app_constants.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../todos/domain/entities/todo_entity.dart';
 import '../../../todos/domain/entities/subtask_entity.dart';
 import '../../../todos/presentation/providers/todo_providers.dart';
@@ -15,6 +16,7 @@ import '../../../todos/services/providers/todo_notification_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../shared/utils/recurrence_helper.dart';
 import '../../../family/presentation/providers/family_provider.dart';
+import '../../../../core/services/providers/translation_provider.dart';
 import 'category_picker_widget.dart';
 import 'tag_input_widget.dart';
 import 'subtask_list_widget.dart';
@@ -412,7 +414,7 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Warning: Subtasks update failed: $e'),
+                content: Text(AppLocalizations.of(context)!.warningSubtasksUpdateFailed(e.toString())),
                 backgroundColor: Colors.orange,
                 duration: const Duration(seconds: 10),
               ),
@@ -476,7 +478,7 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(isEditing ? 'Task updated successfully' : 'Task created successfully'),
+          content: Text(isEditing ? AppLocalizations.of(context)!.taskUpdatedSuccess : AppLocalizations.of(context)!.taskCreatedSuccess),
           backgroundColor: Colors.green,
         ),
       );
@@ -485,10 +487,13 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to ${widget.todoToEdit != null ? 'update' : 'create'} task: $e'),
+          content: Text(AppLocalizations.of(context)!.failedToTask(
+            widget.todoToEdit != null ? 'update' : 'create',
+            e.toString()
+          )),
           backgroundColor: Colors.red,
           action: SnackBarAction(
-            label: 'Retry',
+            label: AppLocalizations.of(context)!.retry,
             textColor: Colors.white,
             onPressed: () => _handleSubmit(),
           ),
@@ -503,15 +508,16 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
   }
 
   String _getIntervalLabel() {
+    final l10n = AppLocalizations.of(context)!;
     switch (_recurrencePattern) {
       case 'daily':
-        return _recurrenceInterval == 1 ? 'day' : 'days';
+        return _recurrenceInterval == 1 ? l10n.day : l10n.days;
       case 'weekly':
-        return _recurrenceInterval == 1 ? 'week' : 'weeks';
+        return _recurrenceInterval == 1 ? l10n.week : l10n.weeks;
       case 'monthly':
-        return _recurrenceInterval == 1 ? 'month' : 'months';
+        return _recurrenceInterval == 1 ? l10n.month : l10n.months;
       case 'yearly':
-        return _recurrenceInterval == 1 ? 'year' : 'years';
+        return _recurrenceInterval == 1 ? l10n.year : l10n.years;
       default:
         return '';
     }
@@ -590,6 +596,151 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
     );
   }
 
+  /// Build translation buttons for a text field
+  Widget _buildTranslationButtons(TextEditingController controller) {
+    final l10n = AppLocalizations.of(context)!;
+    final translationState = ref.watch(translationProvider);
+    final currentLocale = Localizations.localeOf(context).languageCode;
+
+    if (controller.text.trim().isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Row(
+      children: [
+        const Spacer(),
+
+        // Translate to English button
+        if (currentLocale != 'en')
+          TextButton.icon(
+            onPressed: translationState.isLoading
+                ? null
+                : () async {
+                    await _translateText(
+                      controller,
+                      sourceLanguage: currentLocale,
+                      targetLanguage: 'en',
+                    );
+                  },
+            icon: translationState.isLoading
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.translate, size: 18),
+            label: Text(l10n.translateToEnglish, style: const TextStyle(fontSize: 12)),
+          ),
+
+        if (currentLocale != 'en' && currentLocale != 'zh') const SizedBox(width: 8),
+
+        // Translate to Chinese button
+        if (currentLocale != 'zh')
+          TextButton.icon(
+            onPressed: translationState.isLoading
+                ? null
+                : () async {
+                    await _translateText(
+                      controller,
+                      sourceLanguage: currentLocale,
+                      targetLanguage: 'zh',
+                    );
+                  },
+            icon: translationState.isLoading
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.translate, size: 18),
+            label: Text(l10n.translateToChinese, style: const TextStyle(fontSize: 12)),
+          ),
+      ],
+    );
+  }
+
+  /// Translate text in a controller
+  Future<void> _translateText(
+    TextEditingController controller, {
+    required String sourceLanguage,
+    required String targetLanguage,
+  }) async {
+    final text = controller.text.trim();
+    if (text.isEmpty) return;
+
+    final l10n = AppLocalizations.of(context)!;
+
+    try {
+      // Check if model is downloaded
+      final isDownloaded = await ref
+          .read(translationProvider.notifier)
+          .checkModelDownloaded(targetLanguage);
+
+      if (!isDownloaded) {
+        // Ask user if they want to download the model
+        final shouldDownload = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(l10n.downloadLanguageModel(
+              targetLanguage == 'en' ? 'English' : 'Chinese',
+            )),
+            content: Text(l10n.modelNotDownloaded),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(l10n.cancel),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(l10n.download),
+              ),
+            ],
+          ),
+        );
+
+        if (shouldDownload != true) return;
+
+        // Show downloading indicator
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.downloadingModel)),
+          );
+        }
+
+        await ref.read(translationProvider.notifier).downloadModel(targetLanguage);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.modelDownloaded),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+
+      // Translate
+      final translatedText = await ref.read(translationProvider.notifier).translate(
+            text: text,
+            sourceLanguage: sourceLanguage,
+            targetLanguage: targetLanguage,
+          );
+
+      if (translatedText != null) {
+        controller.text = translatedText;
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${l10n.translationError}: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -603,7 +754,7 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  widget.todoToEdit != null ? 'Edit Task' : 'Add New Task',
+                  widget.todoToEdit != null ? AppLocalizations.of(context)!.editTask : AppLocalizations.of(context)!.addNewTask,
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 24),
@@ -611,28 +762,36 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                 // Title
                 TextFormField(
                   controller: _titleController,
-                  decoration: const InputDecoration(
-                    labelText: 'Title',
-                    hintText: 'Enter task title',
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.title,
+                    hintText: AppLocalizations.of(context)!.enterTaskTitle,
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter a title';
+                      return AppLocalizations.of(context)!.pleaseEnterTitle;
                     }
                     return null;
                   },
                 ),
+                const SizedBox(height: 8),
+
+                // Translation buttons for title
+                _buildTranslationButtons(_titleController),
                 const SizedBox(height: 16),
 
                 // Description
                 TextFormField(
                   controller: _descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Description (optional)',
-                    hintText: 'Enter task description',
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.description,
+                    hintText: AppLocalizations.of(context)!.enterTaskDescription,
                   ),
                   maxLines: 3,
                 ),
+                const SizedBox(height: 8),
+
+                // Translation buttons for description
+                _buildTranslationButtons(_descriptionController),
                 const SizedBox(height: 16),
 
                 // Location with autocomplete
@@ -642,8 +801,8 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                     controller: _locationController,
                     focusNode: _locationFocusNode,
                     decoration: InputDecoration(
-                      labelText: 'Location (optional)',
-                      hintText: 'Type at least 3 characters to search',
+                      labelText: AppLocalizations.of(context)!.location,
+                      hintText: AppLocalizations.of(context)!.searchLocation,
                       prefixIcon: const Icon(Icons.location_on),
                       suffixIcon: _isSearchingLocations
                           ? const Padding(
@@ -701,7 +860,7 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.calendar_today),
-                  title: const Text('Date'),
+                  title: Text(AppLocalizations.of(context)!.date),
                   subtitle: Text(DateFormat('EEEE, MMM d, yyyy').format(_selectedDate)),
                   onTap: _selectDate,
                 ),
@@ -710,11 +869,11 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.access_time),
-                  title: const Text('Time (optional)'),
+                  title: Text(AppLocalizations.of(context)!.time),
                   subtitle: Text(
                     _selectedTime != null
                         ? _selectedTime!.format(context)
-                        : 'No time set',
+                        : AppLocalizations.of(context)!.noTimeSet,
                   ),
                   onTap: _selectTime,
                   trailing: _selectedTime != null
@@ -731,30 +890,30 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                 // Type
                 DropdownButtonFormField<String>(
                   value: _type,
-                  decoration: const InputDecoration(
-                    labelText: 'Type',
-                    prefixIcon: Icon(Icons.category),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.type,
+                    prefixIcon: const Icon(Icons.category),
                   ),
-                  items: const [
+                  items: [
                     DropdownMenuItem(
                       value: AppConstants.todoTypeAppointment,
-                      child: Text('Appointment'),
+                      child: Text(AppLocalizations.of(context)!.appointment),
                     ),
                     DropdownMenuItem(
                       value: AppConstants.todoTypeWork,
-                      child: Text('Work'),
+                      child: Text(AppLocalizations.of(context)!.work),
                     ),
                     DropdownMenuItem(
                       value: AppConstants.todoTypeShopping,
-                      child: Text('Shopping'),
+                      child: Text(AppLocalizations.of(context)!.shopping),
                     ),
                     DropdownMenuItem(
                       value: AppConstants.todoTypePersonal,
-                      child: Text('Personal'),
+                      child: Text(AppLocalizations.of(context)!.personal),
                     ),
                     DropdownMenuItem(
                       value: AppConstants.todoTypeOther,
-                      child: Text('Other'),
+                      child: Text(AppLocalizations.of(context)!.other),
                     ),
                   ],
                   onChanged: (value) {
@@ -768,16 +927,16 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                 // Priority
                 DropdownButtonFormField<int>(
                   value: _priority,
-                  decoration: const InputDecoration(
-                    labelText: 'Priority',
-                    prefixIcon: Icon(Icons.flag),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.priority,
+                    prefixIcon: const Icon(Icons.flag),
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 1, child: Text('Urgent (P1)')),
-                    DropdownMenuItem(value: 2, child: Text('High (P2)')),
-                    DropdownMenuItem(value: 3, child: Text('Medium (P3)')),
-                    DropdownMenuItem(value: 4, child: Text('Low (P4)')),
-                    DropdownMenuItem(value: 5, child: Text('None (P5)')),
+                  items: [
+                    DropdownMenuItem(value: 1, child: Text(AppLocalizations.of(context)!.urgentP1)),
+                    DropdownMenuItem(value: 2, child: Text(AppLocalizations.of(context)!.highP2)),
+                    DropdownMenuItem(value: 3, child: Text(AppLocalizations.of(context)!.mediumP3)),
+                    DropdownMenuItem(value: 4, child: Text(AppLocalizations.of(context)!.lowP4)),
+                    DropdownMenuItem(value: 5, child: Text(AppLocalizations.of(context)!.noneP5)),
                   ],
                   onChanged: (value) {
                     if (value != null) {
@@ -806,9 +965,9 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                 const SizedBox(height: 16),
 
                 // Subtasks Section
-                const Text(
-                  'Subtasks',
-                  style: TextStyle(
+                Text(
+                  AppLocalizations.of(context)!.subtasks,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                   ),
@@ -820,7 +979,7 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                       child: TextField(
                         controller: _subtaskController,
                         decoration: InputDecoration(
-                          hintText: 'Add a subtask',
+                          hintText: AppLocalizations.of(context)!.addSubtask,
                           prefixIcon: const Icon(Icons.check_box_outline_blank, size: 20),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -866,15 +1025,15 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                         // Assign To dropdown
                         DropdownButtonFormField<String?>(
                           value: _assignedToId,
-                          decoration: const InputDecoration(
-                            labelText: 'Assign To',
-                            prefixIcon: Icon(Icons.person_add),
-                            helperText: 'Assign this task to a family member',
+                          decoration: InputDecoration(
+                            labelText: AppLocalizations.of(context)!.assignTo,
+                            prefixIcon: const Icon(Icons.person_add),
+                            helperText: AppLocalizations.of(context)!.assignHelper,
                           ),
                           items: [
-                            const DropdownMenuItem<String?>(
+                            DropdownMenuItem<String?>(
                               value: null,
-                              child: Text('Not assigned'),
+                              child: Text(AppLocalizations.of(context)!.notAssigned),
                             ),
                             ...members.map((member) {
                               return DropdownMenuItem<String?>(
@@ -910,9 +1069,9 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                         const SizedBox(height: 16),
 
                         // Share With section
-                        const Text(
-                          'Share With',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                        Text(
+                          AppLocalizations.of(context)!.shareWith,
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                         ),
                         const SizedBox(height: 8),
                         Wrap(
@@ -954,7 +1113,7 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                         if (_sharedWith.isNotEmpty) ...[
                           const SizedBox(height: 4),
                           Text(
-                            '${_sharedWith.length} ${_sharedWith.length == 1 ? 'person' : 'people'} can view/edit this task',
+                            AppLocalizations.of(context)!.sharedWithCount(_sharedWith.length),
                             style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                           ),
                         ],
@@ -967,7 +1126,7 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                 // Recurrence Section
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Repeat'),
+                  title: Text(AppLocalizations.of(context)!.repeat),
                   subtitle: _isRecurring
                       ? Text(
                           RecurrenceHelper.getRecurrenceDescription(
@@ -978,7 +1137,7 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                           ),
                           style: const TextStyle(fontSize: 12),
                         )
-                      : const Text('Does not repeat'),
+                      : Text(AppLocalizations.of(context)!.doesNotRepeat),
                   value: _isRecurring,
                   onChanged: (value) {
                     setState(() => _isRecurring = value);
@@ -991,15 +1150,15 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                   // Recurrence Pattern
                   DropdownButtonFormField<String>(
                     value: _recurrencePattern,
-                    decoration: const InputDecoration(
-                      labelText: 'Repeat Pattern',
-                      prefixIcon: Icon(Icons.repeat),
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.repeatPattern,
+                      prefixIcon: const Icon(Icons.repeat),
                     ),
-                    items: const [
-                      DropdownMenuItem(value: 'daily', child: Text('Daily')),
-                      DropdownMenuItem(value: 'weekly', child: Text('Weekly')),
-                      DropdownMenuItem(value: 'monthly', child: Text('Monthly')),
-                      DropdownMenuItem(value: 'yearly', child: Text('Yearly')),
+                    items: [
+                      DropdownMenuItem(value: 'daily', child: Text(AppLocalizations.of(context)!.daily)),
+                      DropdownMenuItem(value: 'weekly', child: Text(AppLocalizations.of(context)!.weekly)),
+                      DropdownMenuItem(value: 'monthly', child: Text(AppLocalizations.of(context)!.monthly)),
+                      DropdownMenuItem(value: 'yearly', child: Text(AppLocalizations.of(context)!.yearly)),
                     ],
                     onChanged: (value) {
                       if (value != null) {
@@ -1012,7 +1171,7 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                   // Recurrence Interval
                   Row(
                     children: [
-                      const Text('Repeat every'),
+                      Text(AppLocalizations.of(context)!.repeatEvery),
                       const SizedBox(width: 8),
                       SizedBox(
                         width: 80,
@@ -1047,21 +1206,21 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
 
                   // Weekday Selection (for weekly recurrence)
                   if (_recurrencePattern == 'weekly') ...[
-                    const Text(
-                      'Repeat on:',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                    Text(
+                      AppLocalizations.of(context)!.repeatOn,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
                       children: [
-                        _buildWeekdayChip('Mon', 1),
-                        _buildWeekdayChip('Tue', 2),
-                        _buildWeekdayChip('Wed', 3),
-                        _buildWeekdayChip('Thu', 4),
-                        _buildWeekdayChip('Fri', 5),
-                        _buildWeekdayChip('Sat', 6),
-                        _buildWeekdayChip('Sun', 7),
+                        _buildWeekdayChip(AppLocalizations.of(context)!.mon, 1),
+                        _buildWeekdayChip(AppLocalizations.of(context)!.tue, 2),
+                        _buildWeekdayChip(AppLocalizations.of(context)!.wed, 3),
+                        _buildWeekdayChip(AppLocalizations.of(context)!.thu, 4),
+                        _buildWeekdayChip(AppLocalizations.of(context)!.fri, 5),
+                        _buildWeekdayChip(AppLocalizations.of(context)!.sat, 6),
+                        _buildWeekdayChip(AppLocalizations.of(context)!.sun, 7),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -1071,11 +1230,11 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.event_busy),
-                    title: const Text('Ends'),
+                    title: Text(AppLocalizations.of(context)!.ends),
                     subtitle: Text(
                       _recurrenceEndDate != null
                           ? DateFormat('MMM d, yyyy').format(_recurrenceEndDate!)
-                          : 'Never',
+                          : AppLocalizations.of(context)!.never,
                     ),
                     onTap: () async {
                       final date = await showDatePicker(
@@ -1107,7 +1266,7 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                   children: [
                     TextButton(
                       onPressed: _isLoading ? null : () => Navigator.pop(context),
-                      child: const Text('Cancel'),
+                      child: Text(AppLocalizations.of(context)!.cancel),
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton(
@@ -1118,7 +1277,7 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : Text(widget.todoToEdit != null ? 'Update' : 'Create'),
+                          : Text(widget.todoToEdit != null ? AppLocalizations.of(context)!.update : AppLocalizations.of(context)!.create),
                     ),
                   ],
                 ),

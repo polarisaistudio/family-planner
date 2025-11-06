@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/smart_planning_provider.dart';
 import '../providers/permission_provider.dart';
 import '../../data/services/notification_service.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Widget to display smart suggestions for todos
 class SmartSuggestionsCard extends ConsumerWidget {
@@ -27,17 +28,17 @@ class SmartSuggestionsCard extends ConsumerWidget {
     if (smartPlanningState.isAnalyzing) {
       return Card(
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: const Padding(
-          padding: EdgeInsets.all(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              SizedBox(
+              const SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
-              SizedBox(width: 12),
-              Text('Analyzing smart suggestions...'),
+              const SizedBox(width: 12),
+              Text(AppLocalizations.of(context)!.analyzingSmartSuggestions),
             ],
           ),
         ),
@@ -88,7 +89,7 @@ class SmartSuggestionsCard extends ConsumerWidget {
               const Icon(Icons.lightbulb_outline, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Smart Suggestions',
+                AppLocalizations.of(context)!.smartSuggestions,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -132,7 +133,7 @@ class _SuggestionItem extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    _getTypeLabel(suggestion.type),
+                    _getTypeLabel(context, suggestion.type),
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
@@ -185,16 +186,17 @@ class _SuggestionItem extends ConsumerWidget {
     );
   }
 
-  String _getTypeLabel(String type) {
+  String _getTypeLabel(BuildContext context, String type) {
+    final l10n = AppLocalizations.of(context)!;
     switch (type) {
       case 'weather':
-        return 'WEATHER';
+        return l10n.weather;
       case 'location':
-        return 'LOCATION';
+        return l10n.locationLabel;
       case 'traffic':
-        return 'TRAFFIC';
+        return l10n.trafficLabel;
       case 'preparation':
-        return 'REMINDER';
+        return l10n.reminder;
       default:
         return type.toUpperCase();
     }
@@ -222,7 +224,7 @@ class _SuggestionItem extends ConsumerWidget {
         default:
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Action: ${suggestion.actionText}'),
+              content: Text(AppLocalizations.of(context)!.action(suggestion.actionText!)),
               duration: const Duration(seconds: 2),
             ),
           );
@@ -231,7 +233,7 @@ class _SuggestionItem extends ConsumerWidget {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error: $e'),
+          content: Text(AppLocalizations.of(context)!.errorWithMessage(e.toString())),
           backgroundColor: Colors.red,
         ),
       );
@@ -242,18 +244,18 @@ class _SuggestionItem extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.wb_sunny, color: Colors.orange),
-            SizedBox(width: 8),
-            Text('Weather Details'),
+            const Icon(Icons.wb_sunny, color: Colors.orange),
+            const SizedBox(width: 8),
+            Text(AppLocalizations.of(context)!.weatherDetails),
           ],
         ),
         content: Text(suggestion.message),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
+            child: Text(AppLocalizations.of(context)!.ok),
           ),
         ],
       ),
@@ -269,7 +271,7 @@ class _SuggestionItem extends ConsumerWidget {
     if (suggestion.suggestedTime != null) {
       await notificationService.scheduleNotification(
         id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
-        title: 'Time to Leave!',
+        title: AppLocalizations.of(context)!.timeToLeave,
         body: suggestion.message,
         scheduledTime: suggestion.suggestedTime!,
       );
@@ -277,10 +279,10 @@ class _SuggestionItem extends ConsumerWidget {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Reminder set for ${_formatTime(suggestion.suggestedTime!)}'),
+          content: Text(AppLocalizations.of(context)!.reminderSet(_formatTime(suggestion.suggestedTime!))),
           backgroundColor: Colors.green,
           action: SnackBarAction(
-            label: 'OK',
+            label: AppLocalizations.of(context)!.ok,
             textColor: Colors.white,
             onPressed: () {},
           ),
@@ -300,7 +302,7 @@ class _SuggestionItem extends ConsumerWidget {
 
       await notificationService.scheduleNotification(
         id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
-        title: suggestion.type == 'preparation' ? 'Time to Prepare' : 'Traffic Alert',
+        title: suggestion.type == 'preparation' ? AppLocalizations.of(context)!.timeToPrepare : AppLocalizations.of(context)!.trafficAlert,
         body: suggestion.message,
         scheduledTime: suggestion.suggestedTime!,
       );
@@ -308,7 +310,7 @@ class _SuggestionItem extends ConsumerWidget {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Reminder set for ${_formatTime(suggestion.suggestedTime!)}'),
+          content: Text(AppLocalizations.of(context)!.reminderSet(_formatTime(suggestion.suggestedTime!))),
           backgroundColor: Colors.green,
         ),
       );
@@ -325,7 +327,7 @@ class _SuggestionItem extends ConsumerWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Set Reminder Time'),
+          title: Text(AppLocalizations.of(context)!.setReminderTime),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -333,7 +335,7 @@ class _SuggestionItem extends ConsumerWidget {
               const SizedBox(height: 16),
               ListTile(
                 leading: const Icon(Icons.access_time),
-                title: const Text('Reminder Time'),
+                title: Text(AppLocalizations.of(context)!.reminderTime),
                 subtitle: Text(_formatDateTime(selectedDateTime)),
                 onTap: () async {
                   final date = await showDatePicker(
@@ -366,7 +368,7 @@ class _SuggestionItem extends ConsumerWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(context)!.cancel),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -375,7 +377,7 @@ class _SuggestionItem extends ConsumerWidget {
 
                 await notificationService.scheduleNotification(
                   id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
-                  title: 'Task Reminder',
+                  title: AppLocalizations.of(context)!.taskReminder,
                   body: suggestion.message,
                   scheduledTime: selectedDateTime,
                 );
@@ -385,12 +387,12 @@ class _SuggestionItem extends ConsumerWidget {
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Reminder set for ${_formatDateTime(selectedDateTime)}'),
+                    content: Text(AppLocalizations.of(context)!.reminderSetFor(_formatDateTime(selectedDateTime))),
                     backgroundColor: Colors.green,
                   ),
                 );
               },
-              child: const Text('Set Reminder'),
+              child: Text(AppLocalizations.of(context)!.setReminder),
             ),
           ],
         ),
@@ -440,7 +442,7 @@ class _PermissionRequestCard extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Smart Planning Features',
+                    AppLocalizations.of(context)!.smartPlanningFeatures,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -456,24 +458,24 @@ class _PermissionRequestCard extends StatelessWidget {
             _buildFeatureRow(
               context,
               Icons.traffic,
-              'Traffic Updates',
-              'Get departure time suggestions based on traffic',
+              AppLocalizations.of(context)!.trafficUpdates,
+              AppLocalizations.of(context)!.trafficUpdatesDesc,
               hasLocation,
             ),
             const SizedBox(height: 8),
             _buildFeatureRow(
               context,
               Icons.map,
-              'Location Context',
-              'See location details for your tasks',
+              AppLocalizations.of(context)!.locationContext,
+              AppLocalizations.of(context)!.locationContextDesc,
               hasLocation,
             ),
             const SizedBox(height: 8),
             _buildFeatureRow(
               context,
               Icons.directions,
-              'Travel Time',
-              'Automatic travel time calculations',
+              AppLocalizations.of(context)!.travelTimeCalc,
+              AppLocalizations.of(context)!.travelTimeCalcDesc,
               hasLocation,
             ),
 
@@ -497,7 +499,7 @@ class _PermissionRequestCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Enable in Settings',
+                            AppLocalizations.of(context)!.enableInSettings,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.orange.shade900,
@@ -508,7 +510,7 @@ class _PermissionRequestCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'To enable smart features, allow ${missingPermissions.join(' and ')} in your iPhone Settings.',
+                      AppLocalizations.of(context)!.enableSmartFeatures(missingPermissions.join(' and ')),
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.orange.shade900,
@@ -527,7 +529,7 @@ class _PermissionRequestCard extends StatelessWidget {
                     foregroundColor: Colors.white,
                   ),
                   icon: const Icon(Icons.settings, size: 20),
-                  label: const Text('Open iPhone Settings'),
+                  label: Text(AppLocalizations.of(context)!.openIphoneSettings),
                 ),
               ),
             ] else ...[
@@ -544,7 +546,7 @@ class _PermissionRequestCard extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'All smart features are enabled!',
+                        AppLocalizations.of(context)!.allSmartFeaturesEnabled,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.green.shade900,

@@ -120,11 +120,11 @@ class _FamilyMembersPageState extends ConsumerState<FamilyMembersPage> {
                     children: [
                       Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
                       const SizedBox(height: 16),
-                      Text('Error: ${familyState.error}'),
+                      Text(l10n.errorWithMessage(familyState.error!)),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _loadFamilyMembers,
-                        child: const Text('Retry'),
+                        child: Text(l10n.retry),
                       ),
                     ],
                   ),
@@ -138,14 +138,14 @@ class _FamilyMembersPageState extends ConsumerState<FamilyMembersPage> {
                           children: [
                             Icon(Icons.family_restroom, size: 80, color: Colors.grey[300]),
                             const SizedBox(height: 24),
-                            const Text(
-                              'No Family Yet',
-                              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                            Text(
+                              l10n.noFamilyYet,
+                              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 8),
-                            const Text(
-                              'Start collaborating with your family',
-                              style: TextStyle(fontSize: 16, color: Colors.grey),
+                            Text(
+                              l10n.startCollaborating,
+                              style: const TextStyle(fontSize: 16, color: Colors.grey),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 32),
@@ -162,7 +162,7 @@ class _FamilyMembersPageState extends ConsumerState<FamilyMembersPage> {
                                 }
                               },
                               icon: const Icon(Icons.add),
-                              label: const Text('Create New Family'),
+                              label: Text(l10n.createNewFamily),
                               style: FilledButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 32,
@@ -179,7 +179,7 @@ class _FamilyMembersPageState extends ConsumerState<FamilyMembersPage> {
                                 Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 16),
                                   child: Text(
-                                    'OR',
+                                    l10n.or,
                                     style: TextStyle(
                                       color: Colors.grey[600],
                                       fontWeight: FontWeight.bold,
@@ -204,7 +204,7 @@ class _FamilyMembersPageState extends ConsumerState<FamilyMembersPage> {
                                 }
                               },
                               icon: const Icon(Icons.group_add),
-                              label: const Text('Join Existing Family'),
+                              label: Text(l10n.joinExistingFamily),
                               style: OutlinedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 32,
@@ -227,7 +227,7 @@ class _FamilyMembersPageState extends ConsumerState<FamilyMembersPage> {
                                         Icon(Icons.lightbulb_outline, color: Colors.blue[700]),
                                         const SizedBox(width: 8),
                                         Text(
-                                          'Getting Started',
+                                          l10n.gettingStarted,
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                             color: Colors.blue[700],
@@ -237,10 +237,10 @@ class _FamilyMembersPageState extends ConsumerState<FamilyMembersPage> {
                                     ),
                                     const SizedBox(height: 12),
                                     Text(
-                                      '• Create a family if you\'re the first one\n'
-                                      '• Share the invite code with family\n'
-                                      '• Others join using the code\n'
-                                      '• Start assigning and sharing tasks!',
+                                      '${l10n.gettingStartedBullet1}\n'
+                                      '${l10n.gettingStartedBullet2}\n'
+                                      '${l10n.gettingStartedBullet3}\n'
+                                      '${l10n.gettingStartedBullet4}',
                                       style: TextStyle(
                                         fontSize: 13,
                                         color: Colors.blue[900],
@@ -268,7 +268,7 @@ class _FamilyMembersPageState extends ConsumerState<FamilyMembersPage> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
-                                    '${familyState.members.length} family member(s). Assign tasks and collaborate!',
+                                    l10n.familyMembersCount(familyState.members.length),
                                     style: TextStyle(color: Colors.blue.shade900),
                                   ),
                                 ),
@@ -308,7 +308,7 @@ class _FamilyMembersPageState extends ConsumerState<FamilyMembersPage> {
           ? FloatingActionButton.extended(
               onPressed: _showAddMemberDialog,
               icon: const Icon(Icons.person_add),
-              label: const Text('Add Member'),
+              label: Text(l10n.addMember),
             )
           : null,
     );

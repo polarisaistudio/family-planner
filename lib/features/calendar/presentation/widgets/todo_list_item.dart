@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/themes/app_theme.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../todos/domain/entities/todo_entity.dart';
 import '../../../todos/domain/entities/category_entity.dart';
 import '../../../todos/presentation/providers/todo_providers.dart';
@@ -142,7 +143,7 @@ class TodoListItem extends ConsumerWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    '${todo.subtasksCompleted}/${todo.subtasksTotal} subtasks',
+                    AppLocalizations.of(context)!.subtasksCount(todo.subtasksCompleted, todo.subtasksTotal),
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey.shade600,
@@ -253,20 +254,20 @@ class TodoListItem extends ConsumerWidget {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Failed to update: $e'),
+                        content: Text(AppLocalizations.of(context)!.failedToUpdate(e.toString())),
                         backgroundColor: Colors.red,
                         action: SnackBarAction(
-                          label: 'Retry',
+                          label: AppLocalizations.of(context)!.retry,
                           textColor: Colors.white,
                           onPressed: () async {
                             try {
                               await ref.read(todosProvider.notifier).toggleTodoStatus(todo.id);
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Update successful'),
+                                  SnackBar(
+                                    content: Text(AppLocalizations.of(context)!.updateSuccessful),
                                     backgroundColor: Colors.green,
-                                    duration: Duration(seconds: 2),
+                                    duration: const Duration(seconds: 2),
                                   ),
                                 );
                               }
@@ -274,7 +275,7 @@ class TodoListItem extends ConsumerWidget {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('Retry failed: $retryError'),
+                                    content: Text(AppLocalizations.of(context)!.retryFailed(retryError.toString())),
                                     backgroundColor: Colors.red,
                                     duration: const Duration(seconds: 3),
                                   ),
@@ -301,21 +302,21 @@ class TodoListItem extends ConsumerWidget {
                   deleteOption = await showDialog<String>(
                     context: context,
                     builder: (context) => AlertDialog(
-                      title: const Text('Delete Recurring Task'),
-                      content: const Text('This is a recurring task. What would you like to delete?'),
+                      title: Text(AppLocalizations.of(context)!.deleteRecurringTask),
+                      content: Text(AppLocalizations.of(context)!.thisIsRecurringTask),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context, null),
-                          child: const Text('Cancel'),
+                          child: Text(AppLocalizations.of(context)!.cancel),
                         ),
                         TextButton(
                           onPressed: () => Navigator.pop(context, 'this'),
-                          child: const Text('This task only'),
+                          child: Text(AppLocalizations.of(context)!.deleteThisTaskOnly),
                         ),
                         TextButton(
                           onPressed: () => Navigator.pop(context, 'all'),
                           style: TextButton.styleFrom(foregroundColor: Colors.red),
-                          child: const Text('All recurring tasks'),
+                          child: Text(AppLocalizations.of(context)!.deleteAllRecurringTasks),
                         ),
                       ],
                     ),
@@ -325,17 +326,17 @@ class TodoListItem extends ConsumerWidget {
                   final confirmed = await showDialog<bool>(
                     context: context,
                     builder: (context) => AlertDialog(
-                      title: const Text('Delete Task'),
-                      content: const Text('Are you sure you want to delete this task?'),
+                      title: Text(AppLocalizations.of(context)!.deleteTask),
+                      content: Text(AppLocalizations.of(context)!.confirmDeleteTask),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Cancel'),
+                          child: Text(AppLocalizations.of(context)!.cancel),
                         ),
                         TextButton(
                           onPressed: () => Navigator.pop(context, true),
                           style: TextButton.styleFrom(foregroundColor: Colors.red),
-                          child: const Text('Delete'),
+                          child: Text(AppLocalizations.of(context)!.delete),
                         ),
                       ],
                     ),
@@ -351,8 +352,8 @@ class TodoListItem extends ConsumerWidget {
                       await ref.read(todosProvider.notifier).deleteRecurringTodos(parentId);
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('All recurring tasks deleted'),
+                          SnackBar(
+                            content: Text(AppLocalizations.of(context)!.allRecurringTasksDeleted),
                             backgroundColor: Colors.green,
                           ),
                         );
@@ -362,8 +363,8 @@ class TodoListItem extends ConsumerWidget {
                       await ref.read(todosProvider.notifier).deleteTodo(todo.id);
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Task deleted'),
+                          SnackBar(
+                            content: Text(AppLocalizations.of(context)!.taskDeletedSuccess),
                             backgroundColor: Colors.green,
                           ),
                         );
@@ -373,20 +374,20 @@ class TodoListItem extends ConsumerWidget {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Failed to delete: $e'),
+                          content: Text(AppLocalizations.of(context)!.failedToDelete(e.toString())),
                           backgroundColor: Colors.red,
                           action: SnackBarAction(
-                            label: 'Retry',
+                            label: AppLocalizations.of(context)!.retry,
                             textColor: Colors.white,
                             onPressed: () async {
                               try {
                                 await ref.read(todosProvider.notifier).deleteTodo(todo.id);
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Task deleted'),
+                                    SnackBar(
+                                      content: Text(AppLocalizations.of(context)!.taskDeletedSuccess),
                                       backgroundColor: Colors.green,
-                                      duration: Duration(seconds: 2),
+                                      duration: const Duration(seconds: 2),
                                     ),
                                   );
                                 }
@@ -394,7 +395,7 @@ class TodoListItem extends ConsumerWidget {
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('Retry failed: $retryError'),
+                                      content: Text(AppLocalizations.of(context)!.retryFailed(retryError.toString())),
                                       backgroundColor: Colors.red,
                                       duration: const Duration(seconds: 3),
                                     ),

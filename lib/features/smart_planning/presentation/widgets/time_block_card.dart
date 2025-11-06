@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../domain/models/smart_schedule.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class TimeBlockCard extends StatelessWidget {
   final TimeBlock block;
@@ -54,9 +55,9 @@ class TimeBlockCard extends StatelessWidget {
                           color: Colors.blue.shade100,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Text(
-                          'Suggested',
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                        child: Text(
+                          AppLocalizations.of(context)!.suggested,
+                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
                         ),
                       ),
                   ],
@@ -95,13 +96,13 @@ class TimeBlockCard extends StatelessWidget {
                       children: [
                         _buildChip(
                           Icons.timer,
-                          '${block.durationMinutes} min',
+                          AppLocalizations.of(context)!.durationMinutes(block.durationMinutes),
                           Colors.blue,
                         ),
                         if (block.includedTravelTime > 0)
                           _buildChip(
                             Icons.directions_car,
-                            '${block.includedTravelTime} min travel',
+                            AppLocalizations.of(context)!.travelTime(block.includedTravelTime),
                             Colors.orange,
                           ),
                         if (block.task.location != null)

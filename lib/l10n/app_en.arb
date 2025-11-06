@@ -448,5 +448,184 @@
         "type": "String"
       }
     }
-  }
+  },
+
+  "all": "All",
+  "tasks": "{count} tasks",
+  "@tasks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "planMyDay": "Plan My Day",
+  "retryFailed": "Retry failed: {error}",
+  "@retryFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmDeleteTask": "Are you sure you want to delete this task?",
+  "thisIsRecurringTask": "This is a recurring task. What would you like to delete?",
+
+  "subtasksCount": "{completed}/{total} subtasks",
+  "@subtasksCount": {
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+
+  "pleaseEnterTitle": "Please enter a title",
+  "pleaseEnterValidTitle": "Please enter a valid title",
+  "sharedWithCount": "{count} {count, plural, =1{person} other{people}} can view/edit this task",
+  "@sharedWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "repeatPattern": "Repeat Pattern",
+
+  "min": "min",
+  "travel": "travel",
+  "suggested": "Suggested",
+  "durationMinutes": "{minutes} min",
+  "@durationMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "travelTime": "{minutes} min travel",
+  "@travelTime": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+
+  "conflictsDetected": "Conflicts Detected",
+  "optimizedSchedule": "Optimized Schedule",
+  "tasksOverlap": "Tasks overlap: \"{task1}\" and \"{task2}\"",
+  "@tasksOverlap": {
+    "placeholders": {
+      "task1": {
+        "type": "String"
+      },
+      "task2": {
+        "type": "String"
+      }
+    }
+  },
+  "tightScheduleMinutes": "Tight schedule: Only {minutes} min between tasks",
+  "@tightScheduleMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "locationConflictMessage": "Location conflict: Different locations within 1 hour",
+
+  "smartPlanningFeatures": "Smart Planning Features",
+  "trafficUpdates": "Traffic Updates",
+  "trafficUpdatesDesc": "Get departure time suggestions based on traffic",
+  "locationContext": "Location Context",
+  "locationContextDesc": "See location details for your tasks",
+  "travelTimeCalc": "Travel Time",
+  "travelTimeCalcDesc": "Automatic travel time calculations",
+  "enableInSettings": "Enable in Settings",
+  "enableSmartFeatures": "To enable smart features, allow {permissions} in your iPhone Settings.",
+  "@enableSmartFeatures": {
+    "placeholders": {
+      "permissions": {
+        "type": "String"
+      }
+    }
+  },
+  "openIphoneSettings": "Open iPhone Settings",
+  "allSmartFeaturesEnabled": "All smart features are enabled!",
+
+  "weather": "WEATHER",
+  "locationLabel": "LOCATION",
+  "trafficLabel": "TRAFFIC",
+  "reminder": "REMINDER",
+
+  "noFamilyYet": "No Family Yet",
+  "startCollaborating": "Start collaborating with your family",
+  "or": "OR",
+  "gettingStarted": "Getting Started",
+  "gettingStartedBullet1": "• Create a family if you're the first one",
+  "gettingStartedBullet2": "• Share the invite code with family",
+  "gettingStartedBullet3": "• Others join using the code",
+  "gettingStartedBullet4": "• Start assigning and sharing tasks!",
+  "familyMembersCount": "{count} family member(s). Assign tasks and collaborate!",
+  "@familyMembersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "tagUrgent": "urgent",
+  "tagImportant": "important",
+  "tagToday": "today",
+  "tagWeekly": "weekly",
+  "tagMonthly": "monthly",
+  "tagRecurring": "recurring",
+  "tagFollowUp": "follow-up",
+  "tagWaiting": "waiting",
+
+  "inviteShareMessage": "Join \"{name}\" on Family Planner!\\n\\nUse this invite code: {code}\\n\\nDownload the app and enter this code to join our family.",
+  "@inviteShareMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+
+  "errorWithMessage": "Error: {error}",
+  "@errorWithMessage": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+
+  "translate": "Translate",
+  "translating": "Translating...",
+  "translated": "Translated",
+  "translationError": "Translation failed",
+  "download": "Download",
+  "downloadLanguageModel": "Download {language} model",
+  "@downloadLanguageModel": {
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadingModel": "Downloading language model...",
+  "modelDownloaded": "Language model downloaded",
+  "modelNotDownloaded": "Language model not downloaded. Tap to download.",
+  "translateToEnglish": "Translate to English",
+  "translateToChinese": "Translate to Chinese",
+  "translationUnavailable": "Translation unavailable"
 }

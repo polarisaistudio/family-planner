@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class TagInputWidget extends StatefulWidget {
   final List<String> tags;
@@ -47,9 +48,9 @@ class _TagInputWidgetState extends State<TagInputWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Tags',
-          style: TextStyle(
+        Text(
+          AppLocalizations.of(context)!.tags,
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
           ),
@@ -61,7 +62,7 @@ class _TagInputWidgetState extends State<TagInputWidget> {
           controller: _controller,
           focusNode: _focusNode,
           decoration: InputDecoration(
-            hintText: 'Add tags (press Enter)',
+            hintText: AppLocalizations.of(context)!.addTags,
             prefixIcon: const Icon(Icons.label_outline, size: 20),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -106,7 +107,7 @@ class _TagInputWidgetState extends State<TagInputWidget> {
         if (widget.tags.isEmpty) ...[
           const SizedBox(height: 8),
           Text(
-            'Suggestions:',
+            AppLocalizations.of(context)!.suggestions,
             style: TextStyle(
               fontSize: 12,
               color: colorScheme.onSurface.withValues(alpha: 0.6),
@@ -116,7 +117,7 @@ class _TagInputWidgetState extends State<TagInputWidget> {
           Wrap(
             spacing: 6,
             runSpacing: 6,
-            children: _commonTags.map((tag) {
+            children: _getCommonTags(context).map((tag) {
               return InkWell(
                 onTap: () => _addTag(tag),
                 borderRadius: BorderRadius.circular(16),
@@ -144,15 +145,18 @@ class _TagInputWidgetState extends State<TagInputWidget> {
     );
   }
 
-  // Common tag suggestions
-  static const List<String> _commonTags = [
-    'urgent',
-    'important',
-    'today',
-    'weekly',
-    'monthly',
-    'recurring',
-    'follow-up',
-    'waiting',
-  ];
+  // Common tag suggestions - get from localization
+  List<String> _getCommonTags(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return [
+      l10n.tagUrgent,
+      l10n.tagImportant,
+      l10n.tagToday,
+      l10n.tagWeekly,
+      l10n.tagMonthly,
+      l10n.tagRecurring,
+      l10n.tagFollowUp,
+      l10n.tagWaiting,
+    ];
+  }
 }
