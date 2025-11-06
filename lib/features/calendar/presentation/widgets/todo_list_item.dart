@@ -130,6 +130,40 @@ class TodoListItem extends ConsumerWidget {
                 ],
               ],
             ),
+            // Display subtask progress
+            if (todo.hasSubtasks) ...[
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Icon(
+                    Icons.checklist,
+                    size: 14,
+                    color: Colors.grey.shade600,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${todo.subtasksCompleted}/${todo.subtasksTotal} subtasks',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: LinearProgressIndicator(
+                      value: todo.subtaskCompletionPercentage,
+                      backgroundColor: Colors.grey.shade200,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        todo.subtaskCompletionPercentage == 1.0
+                            ? Colors.green
+                            : Theme.of(context).colorScheme.primary,
+                      ),
+                      minHeight: 4,
+                    ),
+                  ),
+                ],
+              ),
+            ],
             // Display tags
             if (todo.tags != null && todo.tags!.isNotEmpty) ...[
               const SizedBox(height: 6),

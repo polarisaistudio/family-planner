@@ -9,7 +9,9 @@ awk '
 BEGIN { skip = 0; }
 /^#if __has_include\(<(cloud_firestore|firebase_auth)/ { skip = 1; next; }
 /^#endif/ && skip == 1 { skip = 0; next; }
-skip == 0 && !/\[FLT(Firestore|FirebaseAuth).*Plugin registerWith/ { print; }
+/\[FLTFirebaseFirestorePlugin registerWith/ { next; }
+/\[FLTFirebaseAuthPlugin registerWith/ { next; }
+skip == 0 { print; }
 ' Runner/GeneratedPluginRegistrant.m > Runner/GeneratedPluginRegistrant.m.tmp
 
 mv Runner/GeneratedPluginRegistrant.m.tmp Runner/GeneratedPluginRegistrant.m

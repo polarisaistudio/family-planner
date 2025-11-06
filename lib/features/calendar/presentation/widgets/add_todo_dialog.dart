@@ -8,13 +8,16 @@ import 'package:geocoding/geocoding.dart';
 import 'package:http/http.dart' as http;
 import '../../../../core/constants/app_constants.dart';
 import '../../../todos/domain/entities/todo_entity.dart';
+import '../../../todos/domain/entities/subtask_entity.dart';
 import '../../../todos/presentation/providers/todo_providers.dart';
+import '../../../todos/presentation/providers/subtask_providers.dart';
 import '../../../todos/services/providers/todo_notification_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../shared/utils/recurrence_helper.dart';
 import '../../../family/presentation/providers/family_provider.dart';
 import 'category_picker_widget.dart';
 import 'tag_input_widget.dart';
+import 'subtask_list_widget.dart';
 
 class AddTodoDialog extends ConsumerStatefulWidget {
   final DateTime selectedDate;
@@ -70,6 +73,8 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
   // Phase 4: Enhanced Task Management fields
   String? _category;
   List<String> _tags = [];
+  List<SubtaskEntity> _subtasks = [];
+  final TextEditingController _subtaskController = TextEditingController();
 
   @override
   void initState() {
@@ -106,11 +111,31 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
       _tags = todo.tags ?? [];
     }
 
-    // Load family members when dialog opens
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Load family members and subtasks when dialog opens
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final user = ref.read(currentUserProvider).value;
       if (user != null) {
         ref.read(familyMembersProvider.notifier).loadFamilyMembers(user.id);
+      }
+
+      // Load subtasks if editing an existing todo
+      if (widget.todoToEdit != null) {
+        print('🔵 [ADD TODO] Loading subtasks for todo: ${widget.todoToEdit!.id}');
+        print('🔵 [ADD TODO] Todo hasSubtasks: ${widget.todoToEdit!.hasSubtasks}, subtasksTotal: ${widget.todoToEdit!.subtasksTotal}');
+
+        try {
+          // Always try to load subtasks, even if hasSubtasks is false
+          // This handles the case where subtasks were just created but the todo hasn't been refreshed yet
+          await ref.read(subtasksProvider.notifier).loadSubtasksForTodo(widget.todoToEdit!.id);
+          final loadedSubtasks = ref.read(subtasksProvider.notifier).getSubtasksForTodo(widget.todoToEdit!.id);
+          print('🔵 [ADD TODO] Loaded ${loadedSubtasks.length} subtasks');
+          setState(() {
+            _subtasks = loadedSubtasks;
+          });
+        } catch (e) {
+          // Handle error silently or show a message
+          print('❌ [ADD TODO] Failed to load subtasks: $e');
+        }
       }
     });
   }
@@ -121,6 +146,7 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
     _descriptionController.dispose();
     _locationController.dispose();
     _locationFocusNode.dispose();
+    _subtaskController.dispose();
     _debounceTimer?.cancel();
     _removeOverlay();
     super.dispose();
@@ -359,9 +385,9 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
         // Phase 4: Enhanced Task Management fields
         category: _category,
         tags: _tags.isEmpty ? null : _tags,
-        subtaskIds: null,
-        subtasksTotal: 0,
-        subtasksCompleted: 0,
+        subtaskIds: _subtasks.isEmpty ? null : _subtasks.map((s) => s.id).toList(),
+        subtasksTotal: _subtasks.length,
+        subtasksCompleted: _subtasks.where((s) => s.isCompleted).length,
         templateId: null,
         priorityAutoAdjusted: false,
         priorityAdjustedAt: null,
@@ -370,6 +396,29 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
       if (isEditing) {
         // Update existing todo
         await ref.read(todosProvider.notifier).updateTodo(todo);
+
+        // Update subtasks - delete old ones and create new ones
+        try {
+          if (widget.todoToEdit!.hasSubtasks) {
+            print('🔵 [SUBTASKS] Deleting old subtasks for todo: ${todo.id}');
+            await ref.read(subtasksProvider.notifier).deleteSubtasksForTodo(todo.id);
+          }
+          if (_subtasks.isNotEmpty) {
+            print('🔵 [SUBTASKS] Creating ${_subtasks.length} new subtasks');
+            await ref.read(subtasksProvider.notifier).createSubtasks(todo.id, _subtasks);
+          }
+        } catch (e) {
+          print('🔴 [SUBTASKS] Error updating subtasks: $e');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Warning: Subtasks update failed: $e'),
+                backgroundColor: Colors.orange,
+                duration: const Duration(seconds: 10),
+              ),
+            );
+          }
+        }
 
         // Send notification if assignment changed
         final oldTodo = widget.todoToEdit;
@@ -398,6 +447,18 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
         print('🟢 [ADD TODO] Batch creation complete');
       } else {
         await ref.read(todosProvider.notifier).createTodo(todo);
+
+        // Create subtasks if any
+        if (_subtasks.isNotEmpty) {
+          try {
+            print('🔵 [SUBTASKS] Creating ${_subtasks.length} subtasks for new todo: ${todo.id}');
+            await ref.read(subtasksProvider.notifier).createSubtasks(todo.id, _subtasks);
+            print('🟢 [SUBTASKS] Subtasks created successfully');
+          } catch (e) {
+            print('🔴 [SUBTASKS] Error creating subtasks: $e');
+            // Don't fail the whole operation if subtasks fail
+          }
+        }
 
         // Send notification if task is assigned to someone
         if (todo.assignedToId != null) {
@@ -454,6 +515,62 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
       default:
         return '';
     }
+  }
+
+  void _addSubtask() {
+    final title = _subtaskController.text.trim();
+    if (title.isEmpty) return;
+
+    final subtask = SubtaskEntity(
+      id: const Uuid().v4(),
+      todoId: widget.todoToEdit?.id ?? '', // Will be set when saving todo
+      title: title,
+      isCompleted: false,
+      order: _subtasks.length,
+      createdAt: DateTime.now(),
+    );
+
+    setState(() {
+      _subtasks.add(subtask);
+      _subtaskController.clear();
+    });
+  }
+
+  void _toggleSubtask(String subtaskId, bool isCompleted) {
+    setState(() {
+      final index = _subtasks.indexWhere((s) => s.id == subtaskId);
+      if (index != -1) {
+        _subtasks[index] = _subtasks[index].copyWith(
+          isCompleted: isCompleted,
+          completedAt: isCompleted ? DateTime.now() : null,
+        );
+      }
+    });
+  }
+
+  void _deleteSubtask(String subtaskId) {
+    setState(() {
+      _subtasks.removeWhere((s) => s.id == subtaskId);
+      // Reorder remaining subtasks
+      for (var i = 0; i < _subtasks.length; i++) {
+        _subtasks[i] = _subtasks[i].copyWith(order: i);
+      }
+    });
+  }
+
+  void _reorderSubtasks(int oldIndex, int newIndex) {
+    setState(() {
+      if (newIndex > oldIndex) {
+        newIndex -= 1;
+      }
+      final subtask = _subtasks.removeAt(oldIndex);
+      _subtasks.insert(newIndex, subtask);
+
+      // Update order for all subtasks
+      for (var i = 0; i < _subtasks.length; i++) {
+        _subtasks[i] = _subtasks[i].copyWith(order: i);
+      }
+    });
   }
 
   Widget _buildWeekdayChip(String label, int weekday) {
@@ -686,6 +803,51 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                     setState(() => _tags = tags);
                   },
                 ),
+                const SizedBox(height: 16),
+
+                // Subtasks Section
+                const Text(
+                  'Subtasks',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _subtaskController,
+                        decoration: InputDecoration(
+                          hintText: 'Add a subtask',
+                          prefixIcon: const Icon(Icons.check_box_outline_blank, size: 20),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        ),
+                        onSubmitted: (_) => _addSubtask(),
+                        textInputAction: TextInputAction.done,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.add_circle),
+                      onPressed: _addSubtask,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (_subtasks.isNotEmpty)
+                  SubtaskListWidget(
+                    subtasks: _subtasks,
+                    onSubtaskToggled: _toggleSubtask,
+                    onSubtaskDeleted: _deleteSubtask,
+                    onSubtaskReordered: _reorderSubtasks,
+                    isEditing: true,
+                  ),
                 const SizedBox(height: 16),
 
                 // Family Collaboration Section

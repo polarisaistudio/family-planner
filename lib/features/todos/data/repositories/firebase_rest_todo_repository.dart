@@ -476,6 +476,21 @@ class FirebaseRestTodoRepository {
           : {'nullValue': null},
       'recurrenceParentId': {'stringValue': todo.recurrenceParentId ?? ''},
       'isRecurrenceInstance': {'booleanValue': todo.isRecurrenceInstance},
+      // Phase 4: Enhanced Task Management fields
+      'category': {'stringValue': todo.category ?? ''},
+      'tags': todo.tags != null && todo.tags!.isNotEmpty
+          ? {'arrayValue': {'values': todo.tags!.map((tag) => {'stringValue': tag}).toList()}}
+          : {'nullValue': null},
+      'subtaskIds': todo.subtaskIds != null && todo.subtaskIds!.isNotEmpty
+          ? {'arrayValue': {'values': todo.subtaskIds!.map((id) => {'stringValue': id}).toList()}}
+          : {'nullValue': null},
+      'subtasksTotal': {'integerValue': todo.subtasksTotal.toString()},
+      'subtasksCompleted': {'integerValue': todo.subtasksCompleted.toString()},
+      'templateId': {'stringValue': todo.templateId ?? ''},
+      'priorityAutoAdjusted': {'booleanValue': todo.priorityAutoAdjusted},
+      'priorityAdjustedAt': todo.priorityAdjustedAt != null
+          ? {'timestampValue': _formatTimestamp(todo.priorityAdjustedAt!)}
+          : {'nullValue': null},
     };
   }
 
@@ -520,6 +535,15 @@ class FirebaseRestTodoRepository {
       recurrenceEndDate: _getNullableDateTimeValue(fields['recurrenceEndDate']),
       recurrenceParentId: _getStringValue(fields['recurrenceParentId']),
       isRecurrenceInstance: _getBoolValue(fields['isRecurrenceInstance'], false),
+      // Phase 4: Enhanced Task Management fields
+      category: _getNullableStringValue(fields['category']),
+      tags: _getStringListValue(fields['tags']),
+      subtaskIds: _getStringListValue(fields['subtaskIds']),
+      subtasksTotal: _getIntValue(fields['subtasksTotal'], 0),
+      subtasksCompleted: _getIntValue(fields['subtasksCompleted'], 0),
+      templateId: _getNullableStringValue(fields['templateId']),
+      priorityAutoAdjusted: _getBoolValue(fields['priorityAutoAdjusted'], false),
+      priorityAdjustedAt: _getNullableDateTimeValue(fields['priorityAdjustedAt']),
     );
   }
 
@@ -574,5 +598,24 @@ class FirebaseRestTodoRepository {
     final values = arrayValue['values'] as List?;
     if (values == null) return null;
     return values.map((v) => int.tryParse(v['integerValue'].toString()) ?? 0).toList();
+  }
+
+  String? _getNullableStringValue(dynamic field) {
+    if (field == null || field['nullValue'] != null) return null;
+    final value = field['stringValue'];
+    if (value == null || value.toString().isEmpty) return null;
+    return value.toString();
+  }
+
+  List<String>? _getStringListValue(dynamic field) {
+    if (field == null || field['nullValue'] != null) return null;
+    final arrayValue = field['arrayValue'];
+    if (arrayValue == null) return null;
+    final values = arrayValue['values'] as List?;
+    if (values == null || values.isEmpty) return null;
+    return values
+        .where((v) => v != null && v['stringValue'] != null)
+        .map((v) => v['stringValue'].toString())
+        .toList();
   }
 }
