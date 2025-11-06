@@ -13,7 +13,7 @@ import '../../../smart_planning/presentation/providers/smart_planning_provider.d
 import '../../../smart_planning/presentation/pages/daily_planning_page.dart';
 import '../../../family/presentation/pages/family_members_page.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class CalendarPage extends ConsumerStatefulWidget {
   final String? initialTaskId;

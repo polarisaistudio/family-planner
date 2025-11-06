@@ -13,7 +13,7 @@ import 'features/auth/presentation/providers/auth_providers.dart';
 import 'features/auth/presentation/pages/login_page.dart';
 import 'features/calendar/presentation/pages/calendar_page.dart';
 import 'shared/widgets/loading_screen.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'l10n/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

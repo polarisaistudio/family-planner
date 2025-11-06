@@ -41,8 +41,8 @@ dependencies:
 
   # Firebase - version 11+ with Xcode 16 gRPC-Core fix
   firebase_core: ^4.0.0
-  firebase_auth: ^6.0.0
-  cloud_firestore: ^6.0.0
+  # firebase_auth: ^6.0.0  # Using REST API instead on iOS
+  # cloud_firestore: ^6.0.0  # Using REST API instead on iOS
   firebase_messaging: ^16.0.4
 
   # Calendar
