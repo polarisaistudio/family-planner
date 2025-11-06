@@ -1012,14 +1012,18 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                   // Recurrence Interval
                   Row(
                     children: [
-                      const Expanded(
-                        flex: 2,
-                        child: Text('Repeat every'),
-                      ),
-                      Expanded(
-                        flex: 1,
+                      const Text('Repeat every'),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 80,
                         child: DropdownButtonFormField<int>(
                           value: _recurrenceInterval,
+                          isExpanded: true,
+                          isDense: true,
+                          decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                            border: OutlineInputBorder(),
+                          ),
                           items: List.generate(30, (i) => i + 1)
                               .map((i) => DropdownMenuItem(
                                     value: i,
@@ -1034,8 +1038,7 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Expanded(
-                        flex: 2,
+                      Flexible(
                         child: Text(_getIntervalLabel()),
                       ),
                     ],
