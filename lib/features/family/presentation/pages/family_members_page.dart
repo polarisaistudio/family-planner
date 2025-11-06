@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/family_member_entity.dart';
 import '../providers/family_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -50,20 +51,21 @@ class _FamilyMembersPageState extends ConsumerState<FamilyMembersPage> {
   }
 
   Future<void> _deleteMember(FamilyMemberEntity member) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Remove Family Member'),
-        content: Text('Are you sure you want to remove ${member.name} from your family?'),
+        title: Text(l10n.removeFamilyMember),
+        content: Text(l10n.confirmRemoveMember(member.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Remove'),
+            child: Text(l10n.confirmRemove),
           ),
         ],
       ),
@@ -75,7 +77,7 @@ class _FamilyMembersPageState extends ConsumerState<FamilyMembersPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('${member.name} removed from family'),
+              content: Text(l10n.memberRemoved(member.name)),
               backgroundColor: Colors.green,
             ),
           );
@@ -84,7 +86,7 @@ class _FamilyMembersPageState extends ConsumerState<FamilyMembersPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error removing member: $e'),
+              content: Text(l10n.errorRemovingMember(e.toString())),
               backgroundColor: Colors.red,
             ),
           );
@@ -95,12 +97,13 @@ class _FamilyMembersPageState extends ConsumerState<FamilyMembersPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final familyState = ref.watch(familyMembersProvider);
     final currentUser = ref.watch(currentUserProvider).value;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Family Members'),
+        title: Text(l10n.familyMembers),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),

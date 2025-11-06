@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../todos/domain/entities/todo_entity.dart';
 import '../../../todos/presentation/providers/todo_providers.dart';
 import '../providers/smart_planning_provider.dart';
@@ -331,12 +332,13 @@ class _DailyPlanningPageState extends ConsumerState<DailyPlanningPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Plan Your Day'),
+            Text(l10n.planYourDay),
             Text(
               DateFormat('EEEE, MMM d').format(widget.selectedDate),
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
@@ -347,18 +349,18 @@ class _DailyPlanningPageState extends ConsumerState<DailyPlanningPage> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _generateOptimizedSchedule,
-            tooltip: 'Regenerate schedule',
+            tooltip: l10n.retry,
           ),
         ],
       ),
       body: _isOptimizing
-          ? const Center(
+          ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Optimizing your schedule...'),
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text(l10n.optimizingSchedule),
                 ],
               ),
             )
@@ -370,7 +372,7 @@ class _DailyPlanningPageState extends ConsumerState<DailyPlanningPage> {
                       Icon(Icons.event_available, size: 64, color: Colors.grey[300]),
                       const SizedBox(height: 16),
                       Text(
-                        'No tasks for this day',
+                        l10n.noTasksForDay,
                         style: TextStyle(color: Colors.grey[600], fontSize: 18),
                       ),
                     ],

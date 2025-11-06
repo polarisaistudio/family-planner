@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/models/smart_schedule.dart';
 
 class ConflictAlertCard extends StatelessWidget {
@@ -32,7 +33,7 @@ class ConflictAlertCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _getConflictTitle(conflict.type),
+                    _getConflictTitle(context, conflict.type),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
@@ -65,24 +66,25 @@ class ConflictAlertCard extends StatelessWidget {
                 ],
               ),
             ),
-            _buildSeverityBadge(conflict.severity, color),
+            _buildSeverityBadge(context, conflict.severity, color),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSeverityBadge(ConflictSeverity severity, MaterialColor color) {
+  Widget _buildSeverityBadge(BuildContext context, ConflictSeverity severity, MaterialColor color) {
+    final l10n = AppLocalizations.of(context)!;
     String text;
     switch (severity) {
       case ConflictSeverity.high:
-        text = 'HIGH';
+        text = l10n.high;
         break;
       case ConflictSeverity.medium:
-        text = 'MED';
+        text = l10n.med;
         break;
       case ConflictSeverity.low:
-        text = 'LOW';
+        text = l10n.low;
         break;
     }
 
@@ -127,16 +129,17 @@ class ConflictAlertCard extends StatelessWidget {
     }
   }
 
-  String _getConflictTitle(ConflictType type) {
+  String _getConflictTitle(BuildContext context, ConflictType type) {
+    final l10n = AppLocalizations.of(context)!;
     switch (type) {
       case ConflictType.timeOverlap:
-        return 'Time Overlap';
+        return l10n.timeOverlap;
       case ConflictType.tightSchedule:
-        return 'Tight Schedule';
+        return l10n.tightSchedule;
       case ConflictType.locationConflict:
-        return 'Location Conflict';
+        return l10n.locationConflict;
       case ConflictType.impossibleTravel:
-        return 'Impossible Travel Time';
+        return l10n.impossibleTravelTime;
     }
   }
 }

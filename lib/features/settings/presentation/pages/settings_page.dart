@@ -82,7 +82,7 @@ class SettingsPage extends ConsumerWidget {
                 context: context,
                 builder: (context) => AlertDialog(
                   title: Text(l10n.logoutButton),
-                  content: const Text('Are you sure you want to logout?'),
+                  content: Text(l10n.confirmLogout),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),

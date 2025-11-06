@@ -246,5 +246,207 @@
   "settings": "Settings",
   "language": "Language",
   "languageEnglish": "English",
-  "languageChinese": "中文 (Chinese)"
+  "languageChinese": "中文 (Chinese)",
+
+  "familyNameCreatedSuccess": "Family \"{name}\" created!",
+  "@familyNameCreatedSuccess": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToCreateFamily": "Failed to create family: {error}",
+  "@failedToCreateFamily": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteCodeCopied": "Invite code copied to clipboard!",
+  "done": "Done",
+  "familyCreatedDetails": "Your family \"{name}\" has been created!",
+  "@familyCreatedDetails": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareInviteCode": "Share this invite code with family members:",
+  "validForDays": "Valid for 7 days",
+  "inviteCodeInfo": "You can find this code anytime in Family Members settings",
+  "exampleFamilyName": "E.g., \"Smith Family\" or \"The Johnsons\"",
+  "yourName": "Your Name",
+  "howYouAppear": "How you'll appear to family members",
+  "howFamilySeesYou": "How family members will see you",
+
+  "editFamilyMember": "Edit Family Member",
+  "addFamilyMember": "Add Member",
+  "nameRequired": "Name *",
+  "phone": "Phone",
+  "role": "Role",
+  "admin": "Admin",
+  "child": "Child",
+  "member": "Member",
+  "color": "Color",
+  "active": "Active",
+  "memberCanAccess": "Member can access family features",
+  "pleaseEnterValidEmail": "Please enter a valid email",
+
+  "comments": "Comments",
+  "userNotAuthenticated": "User not authenticated",
+  "failedToSendComment": "Failed to send comment: {error}",
+  "@failedToSendComment": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteComment": "Delete Comment",
+  "confirmDeleteComment": "Are you sure you want to delete this comment?",
+  "commentDeleted": "Comment deleted",
+  "failedToDeleteComment": "Failed to delete comment: {error}",
+  "@failedToDeleteComment": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "noCommentsYet": "No comments yet",
+  "beFirstToComment": "Be the first to comment!",
+  "edited": "(edited)",
+  "writeComment": "Write a comment...",
+
+  "confirmRemove": "Remove",
+  "enterInviteCode": "Enter the invite code shared by your family member",
+  "inviteCodeLabel": "Invite Code",
+  "inviteCodePlaceholder": "XXXX-XXXX",
+  "inviteCodeFormat": "Format: XXXX-XXXX (case insensitive)",
+  "pleaseEnterInviteCode": "Please enter an invite code",
+  "invalidCodeFormat": "Invalid code format. Should be 8 characters.",
+  "aboutInviteCodes": "About Invite Codes",
+  "inviteCodeBullet1": "• Codes are 8 characters long",
+  "inviteCodeBullet2": "• Codes are case insensitive",
+  "inviteCodeBullet3": "• Each code is valid for 7 days",
+  "inviteCodeBullet4": "• You can get the code from your family member",
+  "successfullyJoinedFamily": "Successfully joined family!",
+  "failedToJoinFamily": "Failed to join family: {error}",
+  "@failedToJoinFamily": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+
+  "warningSubtasksUpdateFailed": "Warning: Subtasks update failed: {error}",
+  "@warningSubtasksUpdateFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToTask": "Failed to {action} task: {error}",
+  "@failedToTask": {
+    "placeholders": {
+      "action": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "enterLocation": "Type at least 3 characters to search",
+  "tasksDeleted": "{count} task(s) deleted",
+  "@tasksDeleted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "failedToDeleteTasks": "Failed to delete tasks: {error}",
+  "@failedToDeleteTasks": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+
+  "noTasksForDay": "No tasks for this day",
+  "scheduleScore": "Schedule Score",
+  "tasksMinutes": "{count} tasks • {minutes} min",
+  "@tasksMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+
+  "analyzingSmartSuggestions": "Analyzing smart suggestions...",
+  "smartSuggestions": "Smart Suggestions",
+  "action": "Action: {text}",
+  "@action": {
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "weatherDetails": "Weather Details",
+  "timeToLeave": "Time to Leave!",
+  "reminderSet": "Reminder set for {time}",
+  "@reminderSet": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "timeToPrepare": "Time to Prepare",
+  "trafficAlert": "Traffic Alert",
+  "setReminderTime": "Set Reminder Time",
+  "reminderTime": "Reminder Time",
+  "taskReminder": "Task Reminder",
+  "reminderSetFor": "Reminder set for {datetime}",
+  "@reminderSetFor": {
+    "placeholders": {
+      "datetime": {
+        "type": "String"
+      }
+    }
+  },
+  "setReminder": "Set Reminder",
+
+  "high": "HIGH",
+  "med": "MED",
+  "low": "LOW",
+  "timeOverlap": "Time Overlap",
+  "tightSchedule": "Tight Schedule",
+  "locationConflict": "Location Conflict",
+  "impossibleTravelTime": "Impossible Travel Time",
+
+  "confirmLogout": "Are you sure you want to logout?",
+
+  "copy": "Copy",
+  "share": "Share",
+  "couldNotFindTask": "Could not find task: {error}",
+  "@couldNotFindTask": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  }
 }

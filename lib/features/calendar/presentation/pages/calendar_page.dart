@@ -104,9 +104,10 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
       print('❌ Error opening task from notification: $e');
 
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Could not find task: $e'),
+            content: Text(l10n.couldNotFindTask(e.toString())),
             backgroundColor: Colors.orange,
           ),
         );
@@ -136,20 +137,23 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
   Future<void> _deleteSelectedTodos() async {
     if (_selectedTodoIds.isEmpty) return;
 
+    final l10n = AppLocalizations.of(context)!;
+    final count = _selectedTodoIds.length;
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Tasks'),
-        content: Text('Are you sure you want to delete ${_selectedTodoIds.length} task(s)?'),
+        title: Text(l10n.deleteMultipleTasks),
+        content: Text(l10n.confirmDeleteMultiple(count)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -167,7 +171,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('${_selectedTodoIds.length} task(s) deleted'),
+              content: Text(l10n.tasksDeleted(count)),
               backgroundColor: Colors.green,
             ),
           );
@@ -176,7 +180,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to delete tasks: $e'),
+              content: Text(l10n.failedToDeleteTasks(e.toString())),
               backgroundColor: Colors.red,
             ),
           );
@@ -241,12 +245,13 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final userState = ref.watch(currentUserProvider);
     final todosState = ref.watch(todosProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isSelectionMode ? '${_selectedTodoIds.length} selected' : 'Family Planner'),
+        title: Text(_isSelectionMode ? l10n.tasksSelected(_selectedTodoIds.length) : l10n.appTitle),
         leading: _isSelectionMode
             ? IconButton(
                 icon: const Icon(Icons.close),
@@ -259,7 +264,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
               IconButton(
                 icon: const Icon(Icons.delete),
                 onPressed: _deleteSelectedTodos,
-                tooltip: 'Delete selected',
+                tooltip: l10n.deleteSelected,
               ),
           ] else ...[
             // Filter toggle chip
@@ -267,7 +272,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
               padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
               child: ChoiceChip(
                 label: Text(
-                  _taskFilter == TaskFilter.all ? 'All Tasks' : 'My Tasks',
+                  _taskFilter == TaskFilter.all ? l10n.allTasks : l10n.myTasks,
                   style: const TextStyle(fontSize: 12),
                 ),
                 selected: _taskFilter == TaskFilter.myTasks,
@@ -285,7 +290,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
             IconButton(
               icon: const Icon(Icons.checklist),
               onPressed: _toggleSelectionMode,
-              tooltip: 'Select multiple',
+              tooltip: l10n.selectMultiple,
             ),
             IconButton(
               icon: const Icon(Icons.refresh),

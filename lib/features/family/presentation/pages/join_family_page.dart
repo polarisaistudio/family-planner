@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../utils/invite_code_generator.dart';
 import '../providers/family_management_provider.dart';
 import '../providers/family_provider.dart';
@@ -65,9 +66,10 @@ class _JoinFamilyPageState extends ConsumerState<JoinFamilyPage> {
 
       if (mounted) {
         // Show success and navigate back
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Successfully joined family!'),
+          SnackBar(
+            content: Text(l10n.successfullyJoinedFamily),
             backgroundColor: Colors.green,
           ),
         );
@@ -79,9 +81,10 @@ class _JoinFamilyPageState extends ConsumerState<JoinFamilyPage> {
       }
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to join family: ${e.toString().replaceAll('Exception: ', '')}'),
+            content: Text(l10n.failedToJoinFamily(e.toString().replaceAll('Exception: ', ''))),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 5),
           ),
@@ -96,9 +99,10 @@ class _JoinFamilyPageState extends ConsumerState<JoinFamilyPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Join Family'),
+        title: Text(l10n.joinFamily),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -117,14 +121,14 @@ class _JoinFamilyPageState extends ConsumerState<JoinFamilyPage> {
 
               // Title
               Text(
-                'Join Your Family',
+                l10n.joinYourFamily,
                 style: Theme.of(context).textTheme.headlineSmall,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
 
               Text(
-                'Enter the invite code shared by your family member',
+                l10n.enterInviteCode,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Colors.grey[600],
                     ),
@@ -135,11 +139,11 @@ class _JoinFamilyPageState extends ConsumerState<JoinFamilyPage> {
               // Invite Code Field
               TextFormField(
                 controller: _inviteCodeController,
-                decoration: const InputDecoration(
-                  labelText: 'Invite Code',
-                  hintText: 'XXXX-XXXX',
-                  prefixIcon: Icon(Icons.vpn_key),
-                  helperText: 'Format: XXXX-XXXX (case insensitive)',
+                decoration: InputDecoration(
+                  labelText: l10n.inviteCodeLabel,
+                  hintText: l10n.inviteCodePlaceholder,
+                  prefixIcon: const Icon(Icons.vpn_key),
+                  helperText: l10n.inviteCodeFormat,
                 ),
                 textCapitalization: TextCapitalization.characters,
                 textAlign: TextAlign.center,
@@ -161,10 +165,10 @@ class _JoinFamilyPageState extends ConsumerState<JoinFamilyPage> {
                 },
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Please enter an invite code';
+                    return l10n.pleaseEnterInviteCode;
                   }
                   if (!InviteCodeGenerator.isValidFormat(value)) {
-                    return 'Invalid code format. Should be 8 characters.';
+                    return l10n.invalidCodeFormat;
                   }
                   return null;
                 },
@@ -174,15 +178,15 @@ class _JoinFamilyPageState extends ConsumerState<JoinFamilyPage> {
               // Name Field
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Your Name',
-                  prefixIcon: Icon(Icons.person),
-                  helperText: 'How family members will see you',
+                decoration: InputDecoration(
+                  labelText: l10n.yourName,
+                  prefixIcon: const Icon(Icons.person),
+                  helperText: l10n.howFamilySeesYou,
                 ),
                 textCapitalization: TextCapitalization.words,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Please enter your name';
+                    return l10n.pleaseEnterName;
                   }
                   return null;
                 },
@@ -202,7 +206,7 @@ class _JoinFamilyPageState extends ConsumerState<JoinFamilyPage> {
                         ),
                       )
                     : const Icon(Icons.group_add),
-                label: Text(_isJoining ? 'Joining...' : 'Join Family'),
+                label: Text(_isJoining ? l10n.joiningFamily : l10n.joinFamily),
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
@@ -222,7 +226,7 @@ class _JoinFamilyPageState extends ConsumerState<JoinFamilyPage> {
                           Icon(Icons.info_outline, color: Colors.blue[700]),
                           const SizedBox(width: 8),
                           Text(
-                            'About Invite Codes',
+                            l10n.aboutInviteCodes,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.blue[700],
@@ -232,10 +236,10 @@ class _JoinFamilyPageState extends ConsumerState<JoinFamilyPage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '• Codes are 8 characters long\n'
-                        '• Case insensitive (ABC = abc)\n'
-                        '• Valid for 7 days\n'
-                        '• Ask your family admin for a new code if expired',
+                        '${l10n.inviteCodeBullet1}\n'
+                        '${l10n.inviteCodeBullet2}\n'
+                        '${l10n.inviteCodeBullet3}\n'
+                        '${l10n.inviteCodeBullet4}',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.blue[900],

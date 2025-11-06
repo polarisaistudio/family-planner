@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/family_entity.dart';
 import '../providers/family_management_provider.dart';
 import '../providers/family_provider.dart';
@@ -66,18 +67,20 @@ class _CreateFamilyDialogState extends ConsumerState<CreateFamilyDialog> {
       });
 
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Family "$familyName" created!'),
+            content: Text(l10n.familyNameCreatedSuccess(familyName)),
             backgroundColor: Colors.green,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to create family: $e'),
+            content: Text(l10n.failedToCreateFamily(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -91,11 +94,12 @@ class _CreateFamilyDialogState extends ConsumerState<CreateFamilyDialog> {
 
   void _copyInviteCode() {
     if (_createdFamily?.inviteCode != null) {
+      final l10n = AppLocalizations.of(context)!;
       Clipboard.setData(ClipboardData(text: _createdFamily!.inviteCode!));
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invite code copied to clipboard!'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(l10n.inviteCodeCopied),
+          duration: const Duration(seconds: 2),
         ),
       );
     }
@@ -115,18 +119,19 @@ class _CreateFamilyDialogState extends ConsumerState<CreateFamilyDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AlertDialog(
-      title: Text(_createdFamily == null ? 'Create Your Family' : '🎉 Family Created!'),
+      title: Text(_createdFamily == null ? l10n.createYourFamily : l10n.familyCreated),
       content: SingleChildScrollView(
         child: _createdFamily == null
-            ? _buildCreateForm()
-            : _buildSuccessView(),
+            ? _buildCreateForm(l10n)
+            : _buildSuccessView(l10n),
       ),
       actions: _createdFamily == null
           ? [
               TextButton(
                 onPressed: _isCreating ? null : () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
+                child: Text(l10n.cancel),
               ),
               FilledButton(
                 onPressed: _isCreating ? null : _handleCreateFamily,
@@ -136,7 +141,7 @@ class _CreateFamilyDialogState extends ConsumerState<CreateFamilyDialog> {
                         height: 16,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Create'),
+                    : Text(l10n.create),
               ),
             ]
           : [
@@ -145,36 +150,36 @@ class _CreateFamilyDialogState extends ConsumerState<CreateFamilyDialog> {
                   ref.invalidate(familyMembersProvider);
                   Navigator.of(context).pop(true);
                 },
-                child: const Text('Done'),
+                child: Text(l10n.done),
               ),
             ],
     );
   }
 
-  Widget _buildCreateForm() {
+  Widget _buildCreateForm(AppLocalizations l10n) {
     return Form(
       key: _formKey,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'Create a family to start sharing tasks with your family members.',
-            style: TextStyle(fontSize: 14),
+          Text(
+            l10n.createFamilyHelper,
+            style: const TextStyle(fontSize: 14),
           ),
           const SizedBox(height: 24),
 
           // Family Name
           TextFormField(
             controller: _familyNameController,
-            decoration: const InputDecoration(
-              labelText: 'Family Name',
-              prefixIcon: Icon(Icons.family_restroom),
-              helperText: 'E.g., "Smith Family" or "The Johnsons"',
+            decoration: InputDecoration(
+              labelText: l10n.familyName,
+              prefixIcon: const Icon(Icons.family_restroom),
+              helperText: l10n.exampleFamilyName,
             ),
             textCapitalization: TextCapitalization.words,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Please enter a family name';
+                return l10n.pleaseEnterName;
               }
               return null;
             },
@@ -184,15 +189,15 @@ class _CreateFamilyDialogState extends ConsumerState<CreateFamilyDialog> {
           // User Name
           TextFormField(
             controller: _userNameController,
-            decoration: const InputDecoration(
-              labelText: 'Your Name',
-              prefixIcon: Icon(Icons.person),
-              helperText: 'How you\'ll appear to family members',
+            decoration: InputDecoration(
+              labelText: l10n.yourName,
+              prefixIcon: const Icon(Icons.person),
+              helperText: l10n.howYouAppear,
             ),
             textCapitalization: TextCapitalization.words,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Please enter your name';
+                return l10n.pleaseEnterName;
               }
               return null;
             },
@@ -202,7 +207,7 @@ class _CreateFamilyDialogState extends ConsumerState<CreateFamilyDialog> {
     );
   }
 
-  Widget _buildSuccessView() {
+  Widget _buildSuccessView(AppLocalizations l10n) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -214,15 +219,15 @@ class _CreateFamilyDialogState extends ConsumerState<CreateFamilyDialog> {
         const SizedBox(height: 16),
 
         Text(
-          'Your family "${_createdFamily!.name}" has been created!',
+          l10n.familyCreatedDetails(_createdFamily!.name),
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 16),
         ),
         const SizedBox(height: 24),
 
-        const Text(
-          'Share this invite code with family members:',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+        Text(
+          l10n.shareInviteCode,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
 
@@ -252,13 +257,13 @@ class _CreateFamilyDialogState extends ConsumerState<CreateFamilyDialog> {
                   OutlinedButton.icon(
                     onPressed: _copyInviteCode,
                     icon: const Icon(Icons.copy, size: 18),
-                    label: const Text('Copy'),
+                    label: Text(l10n.copy),
                   ),
                   const SizedBox(width: 8),
                   OutlinedButton.icon(
                     onPressed: _shareInviteCode,
                     icon: const Icon(Icons.share, size: 18),
-                    label: const Text('Share'),
+                    label: Text(l10n.share),
                   ),
                 ],
               ),
@@ -268,7 +273,7 @@ class _CreateFamilyDialogState extends ConsumerState<CreateFamilyDialog> {
         const SizedBox(height: 16),
 
         Text(
-          'Valid for 7 days',
+          l10n.validForDays,
           style: TextStyle(fontSize: 12, color: Colors.grey[600]),
         ),
         const SizedBox(height: 8),
@@ -283,7 +288,7 @@ class _CreateFamilyDialogState extends ConsumerState<CreateFamilyDialog> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'You can find this code anytime in Family Members settings',
+                    l10n.inviteCodeInfo,
                     style: TextStyle(fontSize: 12, color: Colors.amber[900]),
                   ),
                 ),
