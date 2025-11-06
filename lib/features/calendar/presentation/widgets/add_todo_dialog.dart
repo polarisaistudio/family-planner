@@ -861,7 +861,7 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.calendar_today),
                   title: Text(AppLocalizations.of(context)!.date),
-                  subtitle: Text(DateFormat('EEEE, MMM d, yyyy').format(_selectedDate)),
+                  subtitle: Text(DateFormat('EEEE, MMM d, yyyy', Localizations.localeOf(context).languageCode).format(_selectedDate)),
                   onTap: _selectDate,
                 ),
 
@@ -1233,7 +1233,7 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                     title: Text(AppLocalizations.of(context)!.ends),
                     subtitle: Text(
                       _recurrenceEndDate != null
-                          ? DateFormat('MMM d, yyyy').format(_recurrenceEndDate!)
+                          ? DateFormat('MMM d, yyyy', Localizations.localeOf(context).languageCode).format(_recurrenceEndDate!)
                           : AppLocalizations.of(context)!.never,
                     ),
                     onTap: () async {

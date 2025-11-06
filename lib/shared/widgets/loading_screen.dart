@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_constants.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Loading screen widget
 class LoadingScreen extends StatelessWidget {
@@ -7,6 +7,8 @@ class LoadingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       body: Center(
         child: Column(
@@ -15,12 +17,12 @@ class LoadingScreen extends StatelessWidget {
             const CircularProgressIndicator(),
             const SizedBox(height: 24),
             Text(
-              AppConstants.appName,
+              l10n?.appTitle ?? 'Family Planner',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
             Text(
-              'Loading...',
+              l10n?.loading ?? 'Loading...',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Colors.grey,
                   ),

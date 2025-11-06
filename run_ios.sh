@@ -1,25 +1,43 @@
 #!/bin/bash
-# Wrapper script to run Flutter app on iOS with Firebase plugins excluded
+# Wrapper script to run Flutter on iOS with GeneratedPluginRegistrant fix
 
-set -e
-
-echo "🚀 Building Flutter app for iOS (using Firebase REST API)..."
-
-# Navigate to project directory
 cd "$(dirname "$0")"
 
-# Build the app first (this will regenerate files)
-echo "📦 Running flutter build..."
-flutter build ios --no-codesign
+# Fix the GeneratedPluginRegistrant.m file
+fix_plugin_registrant() {
+    if [ -f "ios/Runner/GeneratedPluginRegistrant.m" ]; then
+        awk '
+        BEGIN { skip = 0; }
+        /^#if __has_include\(<(cloud_firestore|firebase_auth)/ { skip = 1; next; }
+        /^#endif/ && skip == 1 { skip = 0; next; }
+        /\[FLTFirebaseFirestorePlugin registerWith/ { next; }
+        /\[FLTFirebaseAuthPlugin registerWith/ { next; }
+        skip == 0 { print; }
+        ' ios/Runner/GeneratedPluginRegistrant.m > ios/Runner/GeneratedPluginRegistrant.m.tmp
+        mv ios/Runner/GeneratedPluginRegistrant.m.tmp ios/Runner/GeneratedPluginRegistrant.m
+        echo "🔧 Fixed GeneratedPluginRegistrant.m"
+    fi
+}
 
-# Fix the generated plugin registrant
-echo "🔧 Fixing iOS plugin registrations..."
-cd ios
-./fix_ios_plugins.sh
-cd ..
+# Watch for changes and fix the file
+watch_and_fix() {
+    while true; do
+        if [ -f "ios/Runner/GeneratedPluginRegistrant.m" ]; then
+            if grep -q "cloud_firestore" ios/Runner/GeneratedPluginRegistrant.m; then
+                echo "⚠️  Detected cloud_firestore in GeneratedPluginRegistrant.m, fixing..."
+                fix_plugin_registrant
+            fi
+        fi
+        sleep 1
+    done
+}
 
-# Now install to device using the already-built app
-echo "📱 Installing to iPhone..."
-flutter install -d "${1:-00008140-0012746A1A7B001C}"
+# Start the watcher in background
+watch_and_fix &
+WATCHER_PID=$!
 
-echo "✅ App deployed successfully!"
+# Trap to kill watcher on exit
+trap "kill $WATCHER_PID 2>/dev/null" EXIT
+
+# Run flutter
+flutter run -d "${1:-00008140-0012746A1A7B001C}"

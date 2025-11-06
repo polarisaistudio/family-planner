@@ -64,8 +64,8 @@ class _CategoryChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    // Get language code (default to 'en' for now, will be updated with localization)
-    const languageCode = 'en';
+    // Get language code from current locale
+    final languageCode = Localizations.localeOf(context).languageCode;
 
     final label = category?.getLocalizedName(languageCode) ?? 'None';
     final iconCodePoint = category?.iconCodePoint;

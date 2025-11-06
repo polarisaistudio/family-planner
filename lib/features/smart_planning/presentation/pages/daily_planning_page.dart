@@ -340,7 +340,7 @@ class _DailyPlanningPageState extends ConsumerState<DailyPlanningPage> {
           children: [
             Text(l10n.planYourDay),
             Text(
-              DateFormat('EEEE, MMM d').format(widget.selectedDate),
+              DateFormat('EEEE, MMM d', Localizations.localeOf(context).languageCode).format(widget.selectedDate),
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
             ),
           ],

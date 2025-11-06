@@ -163,7 +163,7 @@ class _TaskCommentsPageState extends ConsumerState<TaskCommentsPage> {
     } else if (difference.inDays < 7) {
       return '${difference.inDays}d ago';
     } else {
-      return DateFormat('MMM d, yyyy').format(timestamp);
+      return DateFormat('MMM d, yyyy', Localizations.localeOf(context).languageCode).format(timestamp);
     }
   }
 

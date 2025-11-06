@@ -432,7 +432,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                     children: [
                       Text(
                         _selectedDay != null
-                            ? DateFormat('EEEE, MMMM d').format(_selectedDay!)
+                            ? DateFormat('EEEE, MMMM d', Localizations.localeOf(context).languageCode).format(_selectedDay!)
                             : l10n.selectDate,
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
@@ -474,10 +474,11 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                       // Category chips
                       ...PredefinedCategories.categories.map((category) {
                         final isSelected = _categoryFilter == category.id;
+                        final languageCode = Localizations.localeOf(context).languageCode;
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: FilterChip(
-                            label: Text(category.name),
+                            label: Text(category.getLocalizedName(languageCode)),
                             selected: isSelected,
                             onSelected: (selected) {
                               setState(() {
