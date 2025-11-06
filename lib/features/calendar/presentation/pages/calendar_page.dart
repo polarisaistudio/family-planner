@@ -12,6 +12,8 @@ import '../../../smart_planning/presentation/widgets/smart_suggestions_card.dart
 import '../../../smart_planning/presentation/providers/smart_planning_provider.dart';
 import '../../../smart_planning/presentation/pages/daily_planning_page.dart';
 import '../../../family/presentation/pages/family_members_page.dart';
+import '../../../settings/presentation/pages/settings_page.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CalendarPage extends ConsumerStatefulWidget {
   final String? initialTaskId;
@@ -302,45 +304,64 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                     builder: (context) => const FamilyMembersPage(),
                   ),
                 );
+              } else if (value == 'settings') {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsPage(),
+                  ),
+                );
               }
             },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'profile',
-                child: Row(
-                  children: [
-                    const Icon(Icons.person),
-                    const SizedBox(width: 8),
-                    Text(
-                      userState.maybeWhen(
-                        data: (user) => user?.fullName ?? user?.email ?? 'User',
-                        orElse: () => 'User',
+            itemBuilder: (context) {
+              final l10n = AppLocalizations.of(context)!;
+              return [
+                PopupMenuItem(
+                  value: 'profile',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.person),
+                      const SizedBox(width: 8),
+                      Text(
+                        userState.maybeWhen(
+                          data: (user) => user?.fullName ?? user?.email ?? 'User',
+                          orElse: () => 'User',
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const PopupMenuItem(
-                value: 'family',
-                child: Row(
-                  children: [
-                    Icon(Icons.people),
-                    SizedBox(width: 8),
-                    Text('Family Members'),
-                  ],
+                PopupMenuItem(
+                  value: 'family',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.people),
+                      const SizedBox(width: 8),
+                      Text(l10n.familyMembers),
+                    ],
+                  ),
                 ),
-              ),
-              const PopupMenuItem(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    Icon(Icons.logout),
-                    SizedBox(width: 8),
-                    Text('Logout'),
-                  ],
+                PopupMenuItem(
+                  value: 'settings',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.settings),
+                      const SizedBox(width: 8),
+                      Text(l10n.settings),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                PopupMenuItem(
+                  value: 'logout',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.logout),
+                      const SizedBox(width: 8),
+                      Text(l10n.logoutButton),
+                    ],
+                  ),
+                ),
+              ];
+            },
           ),
         ],
       ),

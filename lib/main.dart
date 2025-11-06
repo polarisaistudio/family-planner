@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'firebase_options.dart';
 import 'core/themes/app_theme.dart';
 import 'core/platform/platform_service.dart';
 import 'core/services/providers/fcm_provider.dart';
 import 'core/services/navigation_service.dart';
+import 'core/providers/locale_provider.dart';
 import 'features/auth/presentation/providers/auth_providers.dart';
 import 'features/auth/presentation/pages/login_page.dart';
 import 'features/calendar/presentation/pages/calendar_page.dart';
 import 'shared/widgets/loading_screen.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,12 +42,28 @@ class FamilyPlannerApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
+
     return MaterialApp(
       title: 'Family Planner',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
+
+      // Localization support
+      locale: locale,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en', ''), // English
+        Locale('zh', ''), // Chinese
+      ],
+
       navigatorKey: NavigationService.navigatorKey,
       home: const AuthWrapper(),
       routes: {

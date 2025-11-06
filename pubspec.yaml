@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   # Icons
   cupertino_icons: ^1.0.2
@@ -45,7 +47,7 @@ dependencies:
 
   # Calendar
   table_calendar: ^3.0.9
-  intl: ^0.18.1
+  intl: ^0.20.2
 
   # UI Components
   flutter_svg: ^2.0.7
@@ -108,6 +110,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # Localization
+  generate: true
 
   # Assets
   assets:

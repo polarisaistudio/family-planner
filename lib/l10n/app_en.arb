@@ -1,0 +1,250 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "Family Planner",
+  "appTagline": "Plan together, achieve together",
+
+  "loginTitle": "Log In",
+  "signUpTitle": "Sign Up",
+  "createAccountPrompt": "Create your account to get started",
+  "fullName": "Full Name",
+  "email": "Email",
+  "password": "Password",
+  "confirmPassword": "Confirm Password",
+  "enterFullName": "Enter your full name",
+  "enterEmail": "Enter your email",
+  "enterPassword": "Enter your password",
+  "reEnterPassword": "Re-enter your password",
+  "loginButton": "Log In",
+  "signUpButton": "Sign Up",
+  "logoutButton": "Logout",
+  "dontHaveAccount": "Don't have an account?",
+  "alreadyHaveAccount": "Already have an account?",
+  "loginFailed": "Login Failed",
+  "registrationFailed": "Registration failed",
+  "accountCreatedSuccess": "Account created successfully!",
+
+  "pleaseEnterName": "Please enter your name",
+  "pleaseEnterEmail": "Please enter your email",
+  "pleaseEnterValidEmail": "Please enter a valid email",
+  "pleaseEnterPassword": "Please enter your password",
+  "passwordMinLength": "Password must be at least 6 characters",
+  "passwordsDoNotMatch": "Passwords do not match",
+
+  "selectDate": "Select a date",
+  "allTasks": "All Tasks",
+  "myTasks": "My Tasks",
+  "familyMembers": "Family Members",
+
+  "addNewTask": "Add New Task",
+  "editTask": "Edit Task",
+  "title": "Title",
+  "description": "Description (optional)",
+  "location": "Location (optional)",
+  "enterTaskTitle": "Enter task title",
+  "enterTaskDescription": "Enter task description",
+  "searchLocation": "Type at least 3 characters to search",
+  "date": "Date",
+  "time": "Time (optional)",
+  "noTimeSet": "No time set",
+  "type": "Type",
+  "priority": "Priority",
+  "subtasks": "Subtasks",
+  "addSubtask": "Add a subtask",
+  "assignTo": "Assign To",
+  "assignHelper": "Assign this task to a family member",
+  "notAssigned": "Not assigned",
+  "shareWith": "Share With",
+  "repeat": "Repeat",
+  "doesNotRepeat": "Does not repeat",
+  "repeatEvery": "Repeat every",
+  "repeatOn": "Repeat on:",
+  "ends": "Ends",
+  "never": "Never",
+
+  "appointment": "Appointment",
+  "work": "Work",
+  "shopping": "Shopping",
+  "personal": "Personal",
+  "other": "Other",
+
+  "urgentP1": "Urgent (P1)",
+  "highP2": "High (P2)",
+  "mediumP3": "Medium (P3)",
+  "lowP4": "Low (P4)",
+  "noneP5": "None (P5)",
+
+  "daily": "Daily",
+  "weekly": "Weekly",
+  "monthly": "Monthly",
+  "yearly": "Yearly",
+  "mon": "Mon",
+  "tue": "Tue",
+  "wed": "Wed",
+  "thu": "Thu",
+  "fri": "Fri",
+  "sat": "Sat",
+  "sun": "Sun",
+  "day": "day",
+  "days": "days",
+  "week": "week",
+  "weeks": "weeks",
+  "month": "month",
+  "months": "months",
+  "year": "year",
+  "years": "years",
+
+  "ok": "OK",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "retry": "Retry",
+  "create": "Create",
+  "update": "Update",
+  "save": "Save",
+  "close": "Close",
+  "add": "Add",
+  "remove": "Remove",
+  "join": "Join",
+
+  "createTask": "Create",
+  "updateTask": "Update",
+  "deleteTask": "Delete Task",
+  "deleteRecurringTask": "Delete Recurring Task",
+  "deleteThisTaskOnly": "This task only",
+  "deleteAllRecurringTasks": "All recurring tasks",
+  "deleteMultipleTasks": "Delete Tasks",
+  "confirmDeleteMultiple": "Are you sure you want to delete {count} task(s)?",
+  "@confirmDeleteMultiple": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "taskCreatedSuccess": "Task created successfully",
+  "taskUpdatedSuccess": "Task updated successfully",
+  "taskDeletedSuccess": "Task deleted",
+  "allRecurringTasksDeleted": "All recurring tasks deleted",
+  "updateSuccessful": "Update successful",
+  "failedToCreate": "Failed to create task",
+  "failedToUpdate": "Failed to update: {error}",
+  "@failedToUpdate": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDelete": "Failed to delete: {error}",
+  "@failedToDelete": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "subtasksUpdateFailed": "Warning: Subtasks update failed",
+  "errorLoadingTasks": "Error loading tasks",
+  "couldNotFindTask": "Could not find task",
+
+  "completedBy": "Completed by: {name}",
+  "@completedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+
+  "category": "Category",
+  "none": "None",
+
+  "tags": "Tags",
+  "addTags": "Add tags (press Enter)",
+  "suggestions": "Suggestions:",
+
+  "createNewFamily": "Create New Family",
+  "joinExistingFamily": "Join Existing Family",
+  "addMember": "Add Member",
+  "createYourFamily": "Create Your Family",
+  "familyCreated": "🎉 Family Created!",
+  "createFamilyHelper": "Create a family to start sharing tasks with your family members.",
+  "familyName": "Family Name",
+  "familyCreatedMessage": "Family \"{name}\" created!",
+  "@familyCreatedMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteMessage": "Join \"{name}\" on Family Planner!\\n\\n{code}",
+  "@inviteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "joinFamily": "Join Family",
+  "joinYourFamily": "Join Your Family",
+  "inviteCode": "Invite Code",
+  "joiningFamily": "Joining...",
+  "removeFamilyMember": "Remove Family Member",
+  "confirmRemoveMember": "Are you sure you want to remove {name} from your family?",
+  "@confirmRemoveMember": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "memberRemoved": "{name} removed from family",
+  "@memberRemoved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "errorRemovingMember": "Error removing member: {error}",
+  "@errorRemovingMember": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+
+  "planYourDay": "Plan Your Day",
+  "optimizingSchedule": "Optimizing your schedule...",
+
+  "deleteSelected": "Delete selected",
+  "selectMultiple": "Select multiple",
+  "tasksSelected": "{count} selected",
+  "@tasksSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "error": "Error: {message}",
+  "@error": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "loading": "Loading...",
+
+  "settings": "Settings",
+  "language": "Language",
+  "languageEnglish": "English",
+  "languageChinese": "中文 (Chinese)"
+}
