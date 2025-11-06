@@ -34,6 +34,10 @@ migrate_working_dir/
 .pub/
 /build/
 
+# Generated localization files (auto-generated from .arb files)
+lib/l10n/*.dart
+.dart_tool/flutter_gen/
+
 # Symbolication related
 app.*.symbols
 
