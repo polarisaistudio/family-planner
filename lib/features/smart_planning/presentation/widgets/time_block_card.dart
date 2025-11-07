@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../domain/models/smart_schedule.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../shared/widgets/translated_text.dart';
 
 class TimeBlockCard extends StatelessWidget {
   final TimeBlock block;
@@ -80,7 +81,7 @@ class TimeBlockCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
+                    TranslatedText(
                       block.task.title,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../shared/widgets/translated_text.dart';
 
 class TagInputWidget extends StatefulWidget {
   final List<String> tags;
@@ -85,7 +86,13 @@ class _TagInputWidgetState extends State<TagInputWidget> {
             runSpacing: 8,
             children: widget.tags.map((tag) {
               return Chip(
-                label: Text(tag),
+                label: TranslatedText(
+                  tag,
+                  style: TextStyle(
+                    color: colorScheme.onSecondaryContainer,
+                    fontSize: 13,
+                  ),
+                ),
                 deleteIcon: Icon(
                   Icons.close,
                   size: 16,
@@ -93,10 +100,6 @@ class _TagInputWidgetState extends State<TagInputWidget> {
                 ),
                 onDeleted: () => _removeTag(tag),
                 backgroundColor: colorScheme.secondaryContainer,
-                labelStyle: TextStyle(
-                  color: colorScheme.onSecondaryContainer,
-                  fontSize: 13,
-                ),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               );
@@ -129,7 +132,7 @@ class _TagInputWidgetState extends State<TagInputWidget> {
                     ),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Text(
+                  child: TranslatedText(
                     tag,
                     style: TextStyle(
                       fontSize: 12,

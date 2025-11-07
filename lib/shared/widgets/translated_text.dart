@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/services/providers/translation_provider.dart';
+import '../../core/providers/locale_provider.dart';
 
 /// Widget that automatically translates text based on current locale
 /// Auto-detects source language and translates to current locale
@@ -28,20 +29,84 @@ class TranslatedText extends ConsumerStatefulWidget {
 
 class _TranslatedTextState extends ConsumerState<TranslatedText> {
   String? _translatedText;
+  bool _isTranslating = false;
+  String? _lastLocale;
+  String? _lastSourceText;
 
   @override
-  void initState() {
-    super.initState();
-    // Just show original text for now - translation disabled temporarily
-    _translatedText = widget.text;
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (!widget.enabled) {
+      _translatedText = widget.text;
+      return;
+    }
+
+    final currentLocale = ref.watch(localeProvider).languageCode;
+
+    // Translate if locale changed or text changed
+    if (_lastLocale != currentLocale || _lastSourceText != widget.text) {
+      _lastLocale = currentLocale;
+      _lastSourceText = widget.text;
+      _translateIfNeeded();
+    }
   }
 
-  @override
-  void didUpdateWidget(TranslatedText oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.text != widget.text) {
-      _translatedText = widget.text;
+  Future<void> _translateIfNeeded() async {
+    if (!widget.enabled || widget.text.trim().isEmpty) {
+      setState(() => _translatedText = widget.text);
+      return;
     }
+
+    final targetLang = _lastLocale ?? 'en';
+
+    // Detect source language
+    final sourceLang = _detectLanguage(widget.text);
+
+    // If source language matches target, no translation needed
+    if (sourceLang == targetLang) {
+      setState(() => _translatedText = widget.text);
+      return;
+    }
+
+    // Perform translation
+    setState(() => _isTranslating = true);
+
+    try {
+      final translationService = ref.read(translationServiceProvider);
+      final translated = await translationService.translate(
+        text: widget.text,
+        sourceLanguage: sourceLang,
+        targetLanguage: targetLang,
+      );
+
+      if (mounted) {
+        setState(() {
+          _translatedText = translated;
+          _isTranslating = false;
+        });
+      }
+    } catch (e) {
+      print('❌ Translation error: $e');
+      if (mounted) {
+        setState(() {
+          _translatedText = widget.text; // Fallback to original
+          _isTranslating = false;
+        });
+      }
+    }
+  }
+
+  /// Simple language detection based on character set
+  String _detectLanguage(String text) {
+    // Check if text contains Chinese characters
+    final chineseRegex = RegExp(r'[\u4e00-\u9fa5]');
+    if (chineseRegex.hasMatch(text)) {
+      return 'zh';
+    }
+
+    // Default to English
+    return 'en';
   }
 
   @override

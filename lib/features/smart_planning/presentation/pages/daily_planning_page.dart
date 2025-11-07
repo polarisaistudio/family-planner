@@ -429,7 +429,7 @@ class _DailyPlanningPageState extends ConsumerState<DailyPlanningPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Schedule Score',
+                      AppLocalizations.of(context)!.scheduleScore,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -438,7 +438,7 @@ class _DailyPlanningPageState extends ConsumerState<DailyPlanningPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${schedule.orderedTasks.length} tasks • ${schedule.totalEstimatedTime} min',
+                      AppLocalizations.of(context)!.tasksMinutes(schedule.orderedTasks.length, schedule.totalEstimatedTime),
                       style: TextStyle(fontSize: 12, color: color.shade700),
                     ),
                   ],
@@ -480,9 +480,9 @@ class _DailyPlanningPageState extends ConsumerState<DailyPlanningPage> {
           children: [
             Icon(Icons.warning, color: Colors.orange.shade700, size: 20),
             const SizedBox(width: 8),
-            const Text(
-              'Conflicts Detected',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            Text(
+              AppLocalizations.of(context)!.conflictsDetected,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -496,13 +496,13 @@ class _DailyPlanningPageState extends ConsumerState<DailyPlanningPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Row(
+        Row(
           children: [
-            Icon(Icons.lightbulb, color: Colors.blue, size: 20),
-            SizedBox(width: 8),
+            const Icon(Icons.lightbulb, color: Colors.blue, size: 20),
+            const SizedBox(width: 8),
             Text(
-              'Smart Suggestions',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              AppLocalizations.of(context)!.smartSuggestions,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -548,13 +548,13 @@ class _DailyPlanningPageState extends ConsumerState<DailyPlanningPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Row(
+        Row(
           children: [
-            Icon(Icons.schedule, color: Colors.blue, size: 20),
-            SizedBox(width: 8),
+            const Icon(Icons.schedule, color: Colors.blue, size: 20),
+            const SizedBox(width: 8),
             Text(
-              'Optimized Schedule',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              AppLocalizations.of(context)!.optimizedSchedule,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ],
         ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../todos/domain/entities/todo_entity.dart';
+import '../../../../shared/widgets/translated_text.dart';
 
 /// Smart task card (placeholder for future enhancements)
 class SmartTaskCard extends StatelessWidget {
@@ -14,8 +15,8 @@ class SmartTaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: ListTile(
-        title: Text(task.title),
-        subtitle: task.description != null ? Text(task.description!) : null,
+        title: TranslatedText(task.title),
+        subtitle: task.description != null ? TranslatedText(task.description!) : null,
       ),
     );
   }
