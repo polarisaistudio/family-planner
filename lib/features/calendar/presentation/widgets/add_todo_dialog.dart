@@ -597,151 +597,6 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
     );
   }
 
-  /// Build translation buttons for a text field
-  Widget _buildTranslationButtons(TextEditingController controller) {
-    final l10n = AppLocalizations.of(context)!;
-    final translationState = ref.watch(translationProvider);
-    final currentLocale = Localizations.localeOf(context).languageCode;
-
-    if (controller.text.trim().isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Row(
-      children: [
-        const Spacer(),
-
-        // Translate to English button
-        if (currentLocale != 'en')
-          TextButton.icon(
-            onPressed: translationState.isLoading
-                ? null
-                : () async {
-                    await _translateText(
-                      controller,
-                      sourceLanguage: currentLocale,
-                      targetLanguage: 'en',
-                    );
-                  },
-            icon: translationState.isLoading
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.translate, size: 18),
-            label: Text(l10n.translateToEnglish, style: const TextStyle(fontSize: 12)),
-          ),
-
-        if (currentLocale != 'en' && currentLocale != 'zh') const SizedBox(width: 8),
-
-        // Translate to Chinese button
-        if (currentLocale != 'zh')
-          TextButton.icon(
-            onPressed: translationState.isLoading
-                ? null
-                : () async {
-                    await _translateText(
-                      controller,
-                      sourceLanguage: currentLocale,
-                      targetLanguage: 'zh',
-                    );
-                  },
-            icon: translationState.isLoading
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.translate, size: 18),
-            label: Text(l10n.translateToChinese, style: const TextStyle(fontSize: 12)),
-          ),
-      ],
-    );
-  }
-
-  /// Translate text in a controller
-  Future<void> _translateText(
-    TextEditingController controller, {
-    required String sourceLanguage,
-    required String targetLanguage,
-  }) async {
-    final text = controller.text.trim();
-    if (text.isEmpty) return;
-
-    final l10n = AppLocalizations.of(context)!;
-
-    try {
-      // Check if model is downloaded
-      final isDownloaded = await ref
-          .read(translationProvider.notifier)
-          .checkModelDownloaded(targetLanguage);
-
-      if (!isDownloaded) {
-        // Ask user if they want to download the model
-        final shouldDownload = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text(l10n.downloadLanguageModel(
-              targetLanguage == 'en' ? 'English' : 'Chinese',
-            )),
-            content: Text(l10n.modelNotDownloaded),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text(l10n.cancel),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: Text(l10n.download),
-              ),
-            ],
-          ),
-        );
-
-        if (shouldDownload != true) return;
-
-        // Show downloading indicator
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.downloadingModel)),
-          );
-        }
-
-        await ref.read(translationProvider.notifier).downloadModel(targetLanguage);
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(l10n.modelDownloaded),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      }
-
-      // Translate
-      final translatedText = await ref.read(translationProvider.notifier).translate(
-            text: text,
-            sourceLanguage: sourceLanguage,
-            targetLanguage: targetLanguage,
-          );
-
-      if (translatedText != null) {
-        controller.text = translatedText;
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${l10n.translationError}: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -760,6 +615,30 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                 ),
                 const SizedBox(height: 24),
 
+                // Show translated title if editing
+                if (widget.todoToEdit != null && _titleController.text.isNotEmpty) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.title, size: 20, color: Theme.of(context).colorScheme.primary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TranslatedText(
+                            _titleController.text,
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
                 // Title
                 TextFormField(
                   controller: _titleController,
@@ -774,11 +653,34 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 8),
-
-                // Translation buttons for title
-                _buildTranslationButtons(_titleController),
                 const SizedBox(height: 16),
+
+                // Show translated description if editing and not empty
+                if (widget.todoToEdit != null && _descriptionController.text.isNotEmpty) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.description, size: 20, color: Theme.of(context).colorScheme.primary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TranslatedText(
+                            _descriptionController.text,
+                            style: const TextStyle(fontSize: 14),
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
 
                 // Description
                 TextFormField(
@@ -789,10 +691,6 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                   ),
                   maxLines: 3,
                 ),
-                const SizedBox(height: 8),
-
-                // Translation buttons for description
-                _buildTranslationButtons(_descriptionController),
                 const SizedBox(height: 16),
 
                 // Location with autocomplete

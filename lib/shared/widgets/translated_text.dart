@@ -44,8 +44,12 @@ class _TranslatedTextState extends ConsumerState<TranslatedText> {
 
     final currentLocale = ref.watch(localeProvider).languageCode;
 
+    print('🔵 [TranslatedText] Current locale: $currentLocale, Last locale: $_lastLocale');
+    print('🔵 [TranslatedText] Text: "${widget.text}", Last text: "$_lastSourceText"');
+
     // Translate if locale changed or text changed
     if (_lastLocale != currentLocale || _lastSourceText != widget.text) {
+      print('🔵 [TranslatedText] Triggering translation');
       _lastLocale = currentLocale;
       _lastSourceText = widget.text;
       _translateIfNeeded();
@@ -63,8 +67,11 @@ class _TranslatedTextState extends ConsumerState<TranslatedText> {
     // Detect source language
     final sourceLang = _detectLanguage(widget.text);
 
+    print('🔵 [TranslatedText] Source lang: $sourceLang, Target lang: $targetLang');
+
     // If source language matches target, no translation needed
     if (sourceLang == targetLang) {
+      print('🔵 [TranslatedText] Same language, no translation needed');
       setState(() => _translatedText = widget.text);
       return;
     }
@@ -73,12 +80,15 @@ class _TranslatedTextState extends ConsumerState<TranslatedText> {
     setState(() => _isTranslating = true);
 
     try {
+      print('🔵 [TranslatedText] Translating: "${widget.text}"');
       final translationService = ref.read(translationServiceProvider);
       final translated = await translationService.translate(
         text: widget.text,
         sourceLanguage: sourceLang,
         targetLanguage: targetLang,
       );
+
+      print('🟢 [TranslatedText] Translated result: "$translated"');
 
       if (mounted) {
         setState(() {
@@ -87,7 +97,7 @@ class _TranslatedTextState extends ConsumerState<TranslatedText> {
         });
       }
     } catch (e) {
-      print('❌ Translation error: $e');
+      print('❌ [TranslatedText] Translation error: $e');
       if (mounted) {
         setState(() {
           _translatedText = widget.text; // Fallback to original
