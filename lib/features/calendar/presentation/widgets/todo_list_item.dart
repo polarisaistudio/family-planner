@@ -117,8 +117,8 @@ class TodoListItem extends ConsumerWidget {
                   color: Colors.grey,
                 ),
                 const SizedBox(width: 4),
-                Text(
-                  todo.type.toUpperCase(),
+                TranslatedText(
+                  todo.type,
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
                 const SizedBox(width: 12),

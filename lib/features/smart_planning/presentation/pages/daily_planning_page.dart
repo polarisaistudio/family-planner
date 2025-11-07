@@ -8,6 +8,7 @@ import '../providers/smart_planning_provider.dart';
 import '../../domain/models/smart_schedule.dart';
 import '../widgets/time_block_card.dart';
 import '../widgets/conflict_alert_card.dart';
+import '../../../../shared/widgets/translated_text.dart';
 
 /// Daily Planning Page - Shows optimized schedule with smart suggestions
 class DailyPlanningPage extends ConsumerStatefulWidget {
@@ -515,9 +516,9 @@ class _DailyPlanningPageState extends ConsumerState<DailyPlanningPage> {
                 _getSuggestionIcon(suggestion.type),
                 color: suggestion.isUrgent ? Colors.orange : Colors.blue,
               ),
-              title: Text(suggestion.message),
+              title: TranslatedText(suggestion.message),
               subtitle: suggestion.actionText != null
-                  ? Text(suggestion.actionText!)
+                  ? TranslatedText(suggestion.actionText!)
                   : null,
               trailing: suggestion.isUrgent
                   ? const Icon(Icons.priority_high, color: Colors.orange)

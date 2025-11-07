@@ -17,6 +17,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../shared/utils/recurrence_helper.dart';
 import '../../../family/presentation/providers/family_provider.dart';
 import '../../../../core/services/providers/translation_provider.dart';
+import '../../../../shared/widgets/translated_text.dart';
 import 'category_picker_widget.dart';
 import 'tag_input_widget.dart';
 import 'subtask_list_widget.dart';
@@ -951,15 +952,6 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                   selectedCategoryId: _category,
                   onCategorySelected: (categoryId) {
                     setState(() => _category = categoryId);
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Tag Input
-                TagInputWidget(
-                  tags: _tags,
-                  onTagsChanged: (tags) {
-                    setState(() => _tags = tags);
                   },
                 ),
                 const SizedBox(height: 16),
