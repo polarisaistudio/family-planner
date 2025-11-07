@@ -8,9 +8,8 @@ import '../../../todos/domain/entities/todo_entity.dart';
 import '../../../todos/domain/entities/category_entity.dart';
 import '../widgets/todo_list_item.dart';
 import '../widgets/add_todo_dialog.dart';
-import '../../../smart_planning/presentation/widgets/smart_suggestions_card.dart';
+
 import '../../../smart_planning/presentation/providers/smart_planning_provider.dart';
-import '../../../smart_planning/presentation/pages/daily_planning_page.dart';
 import '../../../family/presentation/pages/family_members_page.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -532,38 +531,6 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
               // Divider
               const SliverToBoxAdapter(
                 child: Divider(height: 1),
-              ),
-
-              // Plan My Day Button
-              if (selectedDayTodos.isNotEmpty)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => DailyPlanningPage(
-                              selectedDate: _selectedDay ?? DateTime.now(),
-                            ),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.auto_awesome),
-                      label: Text(l10n.planMyDay),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue.shade700,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(double.infinity, 48),
-                      ),
-                    ),
-                  ),
-                ),
-
-              // Smart Suggestions
-              const SliverToBoxAdapter(
-                child: SmartSuggestionsCard(),
               ),
 
               // Todos List or Empty State

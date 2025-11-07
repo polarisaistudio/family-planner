@@ -87,7 +87,9 @@ class SmartPlanningNotifier extends StateNotifier<SmartPlanningState> {
 
     // Check permissions first
     final permissionState = _ref.read(permissionProvider);
+    print('💡 [analyzeSingleTodo] Checking permissions for ${todo.title}: hasLocation=${permissionState.hasLocation}');
     if (!permissionState.hasLocation) {
+      print('⚠️ [analyzeSingleTodo] No location permission, returning empty suggestions');
       return suggestions;  // Return empty if no permissions
     }
 

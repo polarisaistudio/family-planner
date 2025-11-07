@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/themes/app_theme.dart';
-import '../../../../core/constants/app_constants.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../todos/domain/entities/todo_entity.dart';
 import '../../../todos/domain/entities/category_entity.dart';
@@ -11,7 +10,7 @@ import '../../../todos/services/providers/todo_notification_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../shared/widgets/translated_text.dart';
 import '../../../smart_planning/presentation/providers/smart_planning_provider.dart';
-import '../../../smart_planning/data/services/notification_service.dart';
+import '../../../smart_planning/presentation/providers/permission_provider.dart';
 import 'add_todo_dialog.dart';
 
 class TodoListItem extends ConsumerStatefulWidget {
@@ -51,10 +50,39 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
     setState(() => _isLoadingSuggestions = true);
 
     try {
+      // Check if we have location permissions
+      final permissionNotifier = ref.read(permissionProvider.notifier);
+      final permissionState = ref.read(permissionProvider);
+
+      if (!permissionState.hasLocation) {
+        // Request permissions if not granted
+        print('💡 Requesting location permission for suggestions...');
+        await permissionNotifier.requestAllPermissions();
+
+        // Check again after request
+        final updatedState = ref.read(permissionProvider);
+        if (!updatedState.hasLocation) {
+          // User denied permission, show message
+          if (mounted) {
+            setState(() => _isLoadingSuggestions = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Location permission is required for smart suggestions. Please enable it in Settings.'),
+                backgroundColor: Colors.orange,
+                duration: Duration(seconds: 4),
+              ),
+            );
+          }
+          return;
+        }
+      }
+
+      print('💡 Loading suggestions for ${widget.todo.title}...');
       final suggestions = await ref
           .read(smartPlanningProvider.notifier)
           .analyzeSingleTodo(widget.todo);
 
+      print('💡 Got ${suggestions.length} suggestions for ${widget.todo.title}');
       if (mounted) {
         setState(() {
           _suggestions = suggestions;
@@ -86,6 +114,272 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
     }
   }
 
+  Widget _buildSuggestionItem(BuildContext context, SmartSuggestion suggestion) {
+    Color color;
+    IconData icon;
+
+    switch (suggestion.type) {
+      case 'location':
+        color = Colors.blue;
+        icon = Icons.location_on;
+        break;
+      case 'weather':
+        color = Colors.orange;
+        icon = Icons.wb_sunny;
+        break;
+      case 'time':
+        color = Colors.red;
+        icon = Icons.access_time;
+        break;
+      case 'traffic':
+        color = Colors.purple;
+        icon = Icons.traffic;
+        break;
+      default:
+        color = Colors.grey;
+        icon = Icons.lightbulb;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: color.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 18, color: color),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TranslatedText(
+                  suggestion.message,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: color.withValues(alpha: 0.9),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (suggestion.actionText != null) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: ElevatedButton.icon(
+                onPressed: () => _handleSuggestionAction(context, suggestion),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: color,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  elevation: 0,
+                ),
+                icon: const Icon(Icons.alarm_add, size: 16),
+                label: TranslatedText(
+                  suggestion.actionText!,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleSuggestionAction(BuildContext context, SmartSuggestion suggestion) async {
+    if (suggestion.actionText == 'Set reminder' || suggestion.actionText == 'Set time') {
+      if (suggestion.suggestedTime != null && mounted) {
+        await _showReminderDialog(context, suggestion);
+      } else {
+        // If no suggested time, open edit dialog to set time first
+        showDialog(
+          context: context,
+          builder: (context) => AddTodoDialog(
+            selectedDate: widget.todo.todoDate,
+            todoToEdit: widget.todo,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _showReminderDialog(BuildContext context, SmartSuggestion suggestion) async {
+    final suggestedTime = suggestion.suggestedTime!;
+    DateTime? selectedReminderTime = suggestedTime;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          final timeStr = DateFormat('MMM d, h:mm a').format(selectedReminderTime!);
+          final breakdown = suggestion.travelTimeMinutes != null
+              ? '${suggestion.travelTimeMinutes}min travel + ${suggestion.prepTimeMinutes}min prep'
+              : null;
+
+          return AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.alarm_add, color: Colors.blue),
+                SizedBox(width: 8),
+                Text('Set Reminder'),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'For: ${widget.todo.title}',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue.shade200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.access_time, size: 20, color: Colors.blue),
+                          const SizedBox(width: 8),
+                          Text(
+                            timeStr,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (breakdown != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          breakdown,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextButton.icon(
+                  onPressed: () async {
+                    final TimeOfDay? picked = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.fromDateTime(selectedReminderTime!),
+                    );
+                    if (picked != null && selectedReminderTime != null) {
+                      setState(() {
+                        selectedReminderTime = DateTime(
+                          selectedReminderTime!.year,
+                          selectedReminderTime!.month,
+                          selectedReminderTime!.day,
+                          picked.hour,
+                          picked.minute,
+                        );
+                      });
+                    }
+                  },
+                  icon: const Icon(Icons.edit),
+                  label: const Text('Change time'),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton.icon(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                ),
+                icon: const Icon(Icons.alarm_add),
+                label: const Text('Set Reminder'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      // TODO: Actually schedule the reminder/notification
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✓ Reminder set for ${DateFormat('h:mm a').format(selectedReminderTime!)}'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Widget _buildSuggestionsCard(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+      color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (_isLoadingSuggestions)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(8),
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              )
+            else if (_suggestions.isEmpty)
+              Row(
+                children: [
+                  Icon(Icons.check_circle_outline,
+                    size: 16,
+                    color: Colors.green.shade700,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'No suggestions for this task',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey.shade700,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              )
+            else
+              ..._suggestions.map((suggestion) => _buildSuggestionItem(context, suggestion)).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final priorityColor = AppTheme.getPriorityColor(widget.todo.priority);
@@ -98,7 +392,19 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
           .firstOrNull;
     }
 
-    return Card(
+    // Check if we should show suggestion button (has location or no time set for high priority)
+    final bool canHaveSuggestions = widget.todo.location != null && widget.todo.location!.isNotEmpty ||
+        (widget.todo.todoTime == null && widget.todo.priority <= 2);
+
+    // Debug: Print to see which todos can have suggestions
+    if (canHaveSuggestions) {
+      print('🔍 Todo "${widget.todo.title}" can have suggestions - location: ${widget.todo.location}, time: ${widget.todo.todoTime}, priority: ${widget.todo.priority}');
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       color: widget.isSelected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1) : null,
       child: ListTile(
@@ -250,6 +556,74 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
                           ]
                         : [],
                   ),
+              ),
+            ],
+            // Smart suggestions button and expandable section
+            if (canHaveSuggestions && !widget.isSelectionMode) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  InkWell(
+                    onTap: () {
+                      if (!_showSuggestions && _suggestions.isEmpty) {
+                        _loadSuggestions();
+                      }
+                      setState(() {
+                        _showSuggestions = !_showSuggestions;
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _showSuggestions ? Icons.expand_less : Icons.lightbulb_outline,
+                            size: 14,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _isLoadingSuggestions
+                                ? 'Loading...'
+                                : _showSuggestions
+                                    ? 'Hide suggestions'
+                                    : 'Smart suggestions',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          if (_suggestions.isNotEmpty && !_showSuggestions) ...[
+                            const SizedBox(width: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: _suggestions.any((s) => s.isUrgent)
+                                    ? Colors.red
+                                    : Theme.of(context).colorScheme.primary,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '${_suggestions.length}',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ],
@@ -462,6 +836,11 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
           ],
         ),
       ),
+    ),
+        // Show suggestions card below the todo card when expanded
+        if (_showSuggestions && canHaveSuggestions && !widget.isSelectionMode)
+          _buildSuggestionsCard(context),
+      ],
     );
   }
 }

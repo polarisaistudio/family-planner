@@ -25,11 +25,13 @@ import 'subtask_list_widget.dart';
 class AddTodoDialog extends ConsumerStatefulWidget {
   final DateTime selectedDate;
   final TodoEntity? todoToEdit;
+  final DateTime? suggestedReminderTime;
 
   const AddTodoDialog({
     super.key,
     required this.selectedDate,
     this.todoToEdit,
+    this.suggestedReminderTime,
   });
 
   @override
@@ -333,10 +335,10 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
         throw Exception('User not authenticated');
       }
 
-      // Create DateTime for time if selected
+      // Create DateTime for time if selected (in UTC to avoid timezone conversion)
       DateTime? todoTime;
       if (_selectedTime != null) {
-        todoTime = DateTime(
+        todoTime = DateTime.utc(
           2000,
           1,
           1,
