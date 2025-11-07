@@ -4,6 +4,7 @@ import '../providers/smart_planning_provider.dart';
 import '../providers/permission_provider.dart';
 import '../../data/services/notification_service.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../shared/widgets/translated_text.dart';
 
 /// Widget to display smart suggestions for todos
 class SmartSuggestionsCard extends ConsumerWidget {
@@ -148,7 +149,7 @@ class _SuggestionItem extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Text(
+            TranslatedText(
               suggestion.message,
               style: TextStyle(
                 fontSize: 14,
@@ -170,7 +171,7 @@ class _SuggestionItem extends ConsumerWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
+                    TranslatedText(
                       suggestion.actionText!,
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
