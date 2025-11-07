@@ -41,7 +41,22 @@ class FirebaseRestAuthRepository {
         print('🟢 [REST AUTH] Sign in successful, fetching user profile...');
 
         // Fetch user profile from Firestore
-        final user = await _fetchUserProfile(_userId!);
+        var user = await _fetchUserProfile(_userId!);
+
+        // If profile doesn't exist, create one with email only
+        if (user == null) {
+          print('⚠️  [REST AUTH] No profile found, creating one...');
+          final newUser = UserEntity(
+            id: _userId!,
+            email: email,
+            fullName: email.split('@')[0], // Use email username as default name
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
+          await _createUserProfile(newUser);
+          user = await _fetchUserProfile(_userId!);
+        }
+
         _currentUser = user;
 
         print('🟢 [REST AUTH] User: ${user?.fullName} (${user?.email})');
@@ -180,27 +195,36 @@ class FirebaseRestAuthRepository {
   Future<void> _createUserProfile(UserEntity user) async {
     try {
       final url = Uri.parse('$_firestoreBaseUrl/users/${user.id}');
+
+      final fields = <String, dynamic>{
+        'email': {'stringValue': user.email},
+        'fullName': {'stringValue': user.fullName ?? ''},
+        'createdAt': {'timestampValue': user.createdAt.toUtc().toIso8601String()},
+        'updatedAt': {'timestampValue': user.updatedAt.toUtc().toIso8601String()},
+      };
+
+      // Only add languagePreference if it's not null
+      if (user.languagePreference != null) {
+        fields['languagePreference'] = {'stringValue': user.languagePreference};
+      }
+
+      final requestBody = json.encode({'fields': fields});
+      print('🔵 [REST AUTH] Creating profile with: $requestBody');
+
       final response = await http.patch(
         url,
         headers: {
           'Authorization': 'Bearer $_idToken',
           'Content-Type': 'application/json',
         },
-        body: json.encode({
-          'fields': {
-            'email': {'stringValue': user.email},
-            'fullName': {'stringValue': user.fullName ?? ''},
-            'languagePreference': {'stringValue': user.languagePreference},
-            'createdAt': {'timestampValue': user.createdAt.toIso8601String()},
-            'updatedAt': {'timestampValue': user.updatedAt.toIso8601String()},
-          }
-        }),
+        body: requestBody,
       );
 
       if (response.statusCode == 200) {
         print('🟢 [REST AUTH] User profile created in Firestore');
       } else {
         print('🔴 [REST AUTH] Failed to create user profile: ${response.statusCode}');
+        print('🔴 [REST AUTH] Response: ${response.body}');
       }
     } catch (e) {
       print('🔴 [REST AUTH] Error creating user profile: $e');

@@ -929,7 +929,7 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                             ),
                             ...members.map((member) {
                               return DropdownMenuItem<String?>(
-                                value: member.id,
+                                value: member.userId,
                                 child: Row(
                                   children: [
                                     CircleAvatar(
@@ -953,7 +953,7 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                             setState(() {
                               _assignedToId = value;
                               _assignedToName = value != null
-                                  ? members.firstWhere((m) => m.id == value).name
+                                  ? members.firstWhere((m) => m.userId == value).name
                                   : null;
                             });
                           },
@@ -970,7 +970,7 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                           spacing: 8,
                           runSpacing: 8,
                           children: members.map((member) {
-                            final isShared = _sharedWith.contains(member.id);
+                            final isShared = _sharedWith.contains(member.userId);
                             return FilterChip(
                               label: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -993,9 +993,9 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                               onSelected: (selected) {
                                 setState(() {
                                   if (selected) {
-                                    _sharedWith.add(member.id);
+                                    _sharedWith.add(member.userId);
                                   } else {
-                                    _sharedWith.remove(member.id);
+                                    _sharedWith.remove(member.userId);
                                   }
                                 });
                               },
