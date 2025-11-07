@@ -1,4 +1,5 @@
 import 'package:uuid/uuid.dart';
+import 'package:intl/intl.dart';
 import '../../features/todos/domain/entities/todo_entity.dart';
 
 /// Helper class for handling recurring todos
@@ -200,45 +201,61 @@ class RecurrenceHelper {
     int interval = 1,
     List<int>? weekdays,
     DateTime? endDate,
+    String? locale,
   }) {
     final buffer = StringBuffer();
+
+    final every = locale == 'zh' ? '每' : 'Every';
+    final day = locale == 'zh' ? '天' : 'day';
+    final days = locale == 'zh' ? '天' : 'days';
+    final week = locale == 'zh' ? '周' : 'week';
+    final weeks = locale == 'zh' ? '周' : 'weeks';
+    final month = locale == 'zh' ? '月' : 'month';
+    final months = locale == 'zh' ? '月' : 'months';
+    final year = locale == 'zh' ? '年' : 'year';
+    final years = locale == 'zh' ? '年' : 'years';
+    final on = locale == 'zh' ? '' : 'on';
 
     if (interval == 1) {
       switch (pattern) {
         case 'daily':
-          buffer.write('Every day');
+          buffer.write('$every $day');
           break;
         case 'weekly':
           if (weekdays != null && weekdays.isNotEmpty) {
-            buffer.write('Every ${_formatWeekdays(weekdays)}');
+            buffer.write(locale == 'zh'
+              ? '$every${_formatWeekdays(weekdays, locale)}'
+              : '$every ${_formatWeekdays(weekdays, locale)}');
           } else {
-            buffer.write('Every week');
+            buffer.write('$every $week');
           }
           break;
         case 'monthly':
-          buffer.write('Every month');
+          buffer.write('$every $month');
           break;
         case 'yearly':
-          buffer.write('Every year');
+          buffer.write('$every $year');
           break;
       }
     } else {
       switch (pattern) {
         case 'daily':
-          buffer.write('Every $interval days');
+          buffer.write(locale == 'zh' ? '$every$interval$days' : '$every $interval $days');
           break;
         case 'weekly':
           if (weekdays != null && weekdays.isNotEmpty) {
-            buffer.write('Every $interval weeks on ${_formatWeekdays(weekdays)}');
+            buffer.write(locale == 'zh'
+              ? '$every$interval$weeks${_formatWeekdays(weekdays, locale)}'
+              : '$every $interval $weeks $on ${_formatWeekdays(weekdays, locale)}');
           } else {
-            buffer.write('Every $interval weeks');
+            buffer.write(locale == 'zh' ? '$every$interval$weeks' : '$every $interval $weeks');
           }
           break;
         case 'monthly':
-          buffer.write('Every $interval months');
+          buffer.write(locale == 'zh' ? '$every$interval$months' : '$every $interval $months');
           break;
         case 'yearly':
-          buffer.write('Every $interval years');
+          buffer.write(locale == 'zh' ? '$every$interval$years' : '$every $interval $years');
           break;
       }
     }
@@ -251,27 +268,14 @@ class RecurrenceHelper {
   }
 
   /// Format weekdays list to readable string
-  static String _formatWeekdays(List<int> weekdays) {
+  static String _formatWeekdays(List<int> weekdays, [String? locale]) {
     final sorted = List<int>.from(weekdays)..sort();
     final dayNames = sorted.map((day) {
-      switch (day) {
-        case 1:
-          return 'Mon';
-        case 2:
-          return 'Tue';
-        case 3:
-          return 'Wed';
-        case 4:
-          return 'Thu';
-        case 5:
-          return 'Fri';
-        case 6:
-          return 'Sat';
-        case 7:
-          return 'Sun';
-        default:
-          return '';
-      }
+      // Use DateFormat to get localized day names
+      // ISO weekday: Monday=1, Sunday=7
+      // DateTime weekday: Monday=1, Sunday=7 (same)
+      final date = DateTime(2025, 1, day); // Week starting Jan 6, 2025 is Monday
+      return DateFormat('E', locale).format(date);
     }).toList();
 
     if (dayNames.length == 1) {

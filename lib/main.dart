@@ -7,6 +7,7 @@ import 'firebase_options.dart';
 import 'core/themes/app_theme.dart';
 import 'core/platform/platform_service.dart';
 import 'core/services/providers/fcm_provider.dart';
+import 'core/services/providers/translation_provider.dart';
 import 'core/services/navigation_service.dart';
 import 'core/providers/locale_provider.dart';
 import 'features/auth/presentation/providers/auth_providers.dart';
@@ -17,6 +18,8 @@ import 'l10n/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  print('🚀 [MAIN] Starting app...');
 
   // Initialize Firebase only on platforms that support SDK (Web/Android)
   // iOS uses REST API to avoid gRPC/Xcode 16 issues
@@ -30,11 +33,15 @@ void main() async {
     print('📱 Using Firebase REST API (iOS - no gRPC dependencies)');
   }
 
+  print('🚀 [MAIN] Running app...');
+
   runApp(
     const ProviderScope(
       child: FamilyPlannerApp(),
     ),
   );
+
+  print('🚀 [MAIN] App started!');
 }
 
 class FamilyPlannerApp extends ConsumerWidget {
@@ -42,8 +49,12 @@ class FamilyPlannerApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    print('📱 [APP] Building FamilyPlannerApp...');
+    print('📱 [APP] Watching localeProvider...');
     final locale = ref.watch(localeProvider);
+    print('📱 [APP] Got locale: ${locale.languageCode}');
 
+    print('📱 [APP] Creating MaterialApp...');
     return MaterialApp(
       title: 'Family Planner',
       debugShowCheckedModeBanner: false,
@@ -109,6 +120,18 @@ class AuthWrapper extends ConsumerWidget {
             error: (error, stack) => print('❌ FCM initialization error: $error'),
           );
         });
+
+        // Initialize translation models in background
+        // Temporarily disabled to debug app hanging issue
+        // Future.microtask(() async {
+        //   try {
+        //     print('🔄 Initializing translation models...');
+        //     await ref.read(translationServiceProvider).ensureBidirectionalModels();
+        //     print('✅ Translation models ready');
+        //   } catch (e) {
+        //     print('⚠️ Translation model initialization failed: $e');
+        //   }
+        // });
 
         return const CalendarPage();
       },

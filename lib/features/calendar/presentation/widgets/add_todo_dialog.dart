@@ -1134,6 +1134,7 @@ class _AddTodoDialogState extends ConsumerState<AddTodoDialog> {
                             interval: _recurrenceInterval,
                             weekdays: _selectedWeekdays.isEmpty ? null : _selectedWeekdays,
                             endDate: _recurrenceEndDate,
+                            locale: Localizations.localeOf(context).languageCode,
                           ),
                           style: const TextStyle(fontSize: 12),
                         )

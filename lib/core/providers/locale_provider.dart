@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,16 +13,37 @@ class LocaleNotifier extends StateNotifier<Locale> {
   static const String _localeKey = 'app_locale';
 
   LocaleNotifier() : super(const Locale('en', '')) {
-    _loadLocale();
+    print('🌍 [LOCALE] LocaleNotifier constructor called');
+    // Load locale asynchronously without blocking
+    _loadLocaleAsync();
+    print('🌍 [LOCALE] LocaleNotifier initialized with default locale: en');
+  }
+
+  /// Load locale asynchronously without blocking the constructor
+  void _loadLocaleAsync() {
+    Future.microtask(() async {
+      await _loadLocale();
+    });
   }
 
   /// Load saved locale from SharedPreferences
   Future<void> _loadLocale() async {
-    final prefs = await SharedPreferences.getInstance();
-    final languageCode = prefs.getString(_localeKey);
+    try {
+      final prefs = await SharedPreferences.getInstance().timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          print('⚠️ [LOCALE] SharedPreferences timed out after 10s, using default locale');
+          throw TimeoutException('SharedPreferences timeout');
+        },
+      );
+      final languageCode = prefs.getString(_localeKey);
 
-    if (languageCode != null) {
-      state = Locale(languageCode, '');
+      if (languageCode != null) {
+        state = Locale(languageCode, '');
+      }
+    } catch (e) {
+      print('❌ [LOCALE] Error loading locale: $e, using default (en)');
+      // Keep default locale on error
     }
   }
 

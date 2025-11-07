@@ -31,13 +31,46 @@ class TranslationService {
 
       _modelDownloaded[translatorKey] = isDownloaded;
 
+      if (!isDownloaded) {
+        print('⚠️ [TRANSLATION] Model for $targetLanguage not downloaded, downloading...');
+        await downloadModel(targetLanguage);
+      }
+
       // Translate
       final translatedText = await translator.translateText(text);
       return translatedText;
     } catch (e) {
       print('❌ [TRANSLATION] Error translating text: $e');
-      rethrow;
+      return text; // Return original on error
     }
+  }
+
+  /// Translate multiple texts at once (more efficient)
+  Future<List<String>> translateBatch({
+    required List<String> texts,
+    required String sourceLanguage,
+    required String targetLanguage,
+  }) async {
+    final results = <String>[];
+
+    for (final text in texts) {
+      if (text.trim().isEmpty) {
+        results.add(text);
+      } else {
+        try {
+          final translated = await translate(
+            text: text,
+            sourceLanguage: sourceLanguage,
+            targetLanguage: targetLanguage,
+          );
+          results.add(translated);
+        } catch (e) {
+          results.add(text); // Keep original on error
+        }
+      }
+    }
+
+    return results;
   }
 
   /// Check if a language model is downloaded
@@ -48,8 +81,31 @@ class TranslationService {
 
   /// Download a language model
   Future<void> downloadModel(String languageCode) async {
+    print('📥 [TRANSLATION] Downloading $languageCode model...');
     final modelManager = OnDeviceTranslatorModelManager();
     await modelManager.downloadModel(languageCode);
+    print('✅ [TRANSLATION] $languageCode model downloaded');
+  }
+
+  /// Ensure both English and Chinese models are downloaded
+  Future<void> ensureBidirectionalModels() async {
+    final modelManager = OnDeviceTranslatorModelManager();
+
+    // Check and download English model
+    final enDownloaded = await modelManager.isModelDownloaded('en');
+    if (!enDownloaded) {
+      print('📥 [TRANSLATION] Downloading English model...');
+      await modelManager.downloadModel('en');
+      print('✅ [TRANSLATION] English model downloaded');
+    }
+
+    // Check and download Chinese model
+    final zhDownloaded = await modelManager.isModelDownloaded('zh');
+    if (!zhDownloaded) {
+      print('📥 [TRANSLATION] Downloading Chinese model...');
+      await modelManager.downloadModel('zh');
+      print('✅ [TRANSLATION] Chinese model downloaded');
+    }
   }
 
   /// Delete a language model to free up space

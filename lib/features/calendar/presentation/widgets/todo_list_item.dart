@@ -8,6 +8,7 @@ import '../../../todos/domain/entities/category_entity.dart';
 import '../../../todos/presentation/providers/todo_providers.dart';
 import '../../../todos/services/providers/todo_notification_provider.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../shared/widgets/translated_text.dart';
 import 'add_todo_dialog.dart';
 
 class TodoListItem extends ConsumerWidget {
@@ -91,7 +92,7 @@ class TodoListItem extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-        title: Text(
+        title: TranslatedText(
           todo.title,
           style: TextStyle(
             decoration: todo.isCompleted ? TextDecoration.lineThrough : null,
@@ -102,7 +103,7 @@ class TodoListItem extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (todo.description != null && todo.description!.isNotEmpty)
-              Text(
+              TranslatedText(
                 todo.description!,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,

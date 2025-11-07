@@ -383,6 +383,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                 child: Card(
                   margin: const EdgeInsets.all(8),
                   child: TableCalendar(
+                    locale: Localizations.localeOf(context).toString(),
                     firstDay: DateTime.utc(2020, 1, 1),
                     lastDay: DateTime.utc(2030, 12, 31),
                     focusedDay: _focusedDay,

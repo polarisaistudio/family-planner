@@ -40,10 +40,20 @@ class CurrentUserNotifier extends StateNotifier<AsyncValue<UserEntity?>> {
 
   Future<void> _init() async {
     try {
-      final user = await _authRepository.getCurrentUser();
+      print('🔍 [AUTH] Initializing auth state...');
+      final user = await _authRepository.getCurrentUser().timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          print('⚠️ [AUTH] getCurrentUser timed out after 10s, assuming not signed in');
+          return null;
+        },
+      );
+      print('✅ [AUTH] Auth state initialized: ${user != null ? "signed in" : "not signed in"}');
       state = AsyncValue.data(user);
     } catch (e, stackTrace) {
-      state = AsyncValue.error(e, stackTrace);
+      print('❌ [AUTH] Error initializing auth state: $e');
+      // On error, assume not signed in rather than staying in loading state
+      state = AsyncValue.data(null);
     }
   }
 

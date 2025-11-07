@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:family_planner/features/todos/domain/entities/subtask_entity.dart';
+import 'package:family_planner/shared/widgets/translated_text.dart';
 
 class SubtaskListWidget extends StatelessWidget {
   final List<SubtaskEntity> subtasks;
@@ -130,7 +131,7 @@ class SubtaskListWidget extends StatelessWidget {
             ),
           ],
         ),
-        title: Text(
+        title: TranslatedText(
           subtask.title,
           style: TextStyle(
             fontSize: 14,
