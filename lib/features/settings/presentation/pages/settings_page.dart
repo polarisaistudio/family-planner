@@ -120,10 +120,13 @@ class SettingsPage extends ConsumerWidget {
               title: Text(l10n.languageEnglish),
               value: 'en',
               groupValue: currentLocale.languageCode,
-              onChanged: (value) {
-                if (value != null) {
-                  ref.read(localeProvider.notifier).setLocale(Locale(value, ''));
-                  Navigator.pop(context);
+              onChanged: (value) async {
+                if (value != null && value != currentLocale.languageCode) {
+                  await ref.read(localeProvider.notifier).setLocale(Locale(value, ''));
+                  if (context.mounted) {
+                    Navigator.pop(context); // Close dialog
+                    Navigator.pop(context); // Close settings page to refresh main page
+                  }
                 }
               },
             ),
@@ -131,10 +134,13 @@ class SettingsPage extends ConsumerWidget {
               title: Text(l10n.languageChinese),
               value: 'zh',
               groupValue: currentLocale.languageCode,
-              onChanged: (value) {
-                if (value != null) {
-                  ref.read(localeProvider.notifier).setLocale(Locale(value, ''));
-                  Navigator.pop(context);
+              onChanged: (value) async {
+                if (value != null && value != currentLocale.languageCode) {
+                  await ref.read(localeProvider.notifier).setLocale(Locale(value, ''));
+                  if (context.mounted) {
+                    Navigator.pop(context); // Close dialog
+                    Navigator.pop(context); // Close settings page to refresh main page
+                  }
                 }
               },
             ),

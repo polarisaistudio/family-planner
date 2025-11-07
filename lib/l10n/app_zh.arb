@@ -436,5 +436,21 @@
   "modelNotDownloaded": "语言模型未下载。点击下载。",
   "translateToEnglish": "翻译成英文",
   "translateToChinese": "翻译成中文",
-  "translationUnavailable": "翻译不可用"
+  "translationUnavailable": "翻译不可用",
+
+  "smartSuggestionsButton": "智能建议",
+  "hideSuggestionsButton": "隐藏建议",
+  "loadingSuggestions": "加载中...",
+  "noSuggestionsForTask": "此任务没有建议",
+  "setReminderDialogTitle": "设置提醒",
+  "reminderFor": "任务：{taskTitle}",
+  "@reminderFor": {
+    "placeholders": {
+      "taskTitle": {
+        "type": "String"
+      }
+    }
+  },
+  "changeTime": "更改时间",
+  "setReminderButton": "设置提醒"
 }

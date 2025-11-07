@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,6 +20,20 @@ class LocaleNotifier extends StateNotifier<Locale> {
     print('🌍 [LOCALE] LocaleNotifier initialized with default locale: en');
   }
 
+  /// Get system locale
+  Locale _getSystemLocale() {
+    final systemLocales = ui.PlatformDispatcher.instance.locales;
+    if (systemLocales.isNotEmpty) {
+      final systemLocale = systemLocales.first;
+      print('🌍 [LOCALE] System locale detected: ${systemLocale.languageCode}');
+      // Only support 'en' and 'zh', default to 'en' for others
+      if (systemLocale.languageCode == 'zh') {
+        return const Locale('zh', '');
+      }
+    }
+    return const Locale('en', '');
+  }
+
   /// Load locale asynchronously without blocking the constructor
   void _loadLocaleAsync() {
     Future.microtask(() async {
@@ -26,24 +41,34 @@ class LocaleNotifier extends StateNotifier<Locale> {
     });
   }
 
-  /// Load saved locale from SharedPreferences
+  /// Load saved locale from SharedPreferences, or use system locale for first-time users
   Future<void> _loadLocale() async {
     try {
       final prefs = await SharedPreferences.getInstance().timeout(
         const Duration(seconds: 10),
         onTimeout: () {
-          print('⚠️ [LOCALE] SharedPreferences timed out after 10s, using default locale');
+          print('⚠️ [LOCALE] SharedPreferences timed out after 10s, using system locale');
           throw TimeoutException('SharedPreferences timeout');
         },
       );
       final languageCode = prefs.getString(_localeKey);
 
       if (languageCode != null) {
+        // User has saved preference, use it
+        print('🌍 [LOCALE] Loading saved locale: $languageCode');
         state = Locale(languageCode, '');
+      } else {
+        // First-time user, use system locale
+        final systemLocale = _getSystemLocale();
+        print('🌍 [LOCALE] First-time user, using system locale: ${systemLocale.languageCode}');
+        state = systemLocale;
+        // Save it for next time
+        await prefs.setString(_localeKey, systemLocale.languageCode);
       }
     } catch (e) {
-      print('❌ [LOCALE] Error loading locale: $e, using default (en)');
-      // Keep default locale on error
+      print('❌ [LOCALE] Error loading locale: $e, using system locale');
+      // On error, use system locale
+      state = _getSystemLocale();
     }
   }
 

@@ -627,5 +627,21 @@
   "modelNotDownloaded": "Language model not downloaded. Tap to download.",
   "translateToEnglish": "Translate to English",
   "translateToChinese": "Translate to Chinese",
-  "translationUnavailable": "Translation unavailable"
+  "translationUnavailable": "Translation unavailable",
+
+  "smartSuggestionsButton": "Smart suggestions",
+  "hideSuggestionsButton": "Hide suggestions",
+  "loadingSuggestions": "Loading...",
+  "noSuggestionsForTask": "No suggestions for this task",
+  "setReminderDialogTitle": "Set Reminder",
+  "reminderFor": "For: {taskTitle}",
+  "@reminderFor": {
+    "placeholders": {
+      "taskTitle": {
+        "type": "String"
+      }
+    }
+  },
+  "changeTime": "Change time",
+  "setReminderButton": "Set Reminder"
 }

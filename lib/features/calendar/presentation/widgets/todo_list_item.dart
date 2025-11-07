@@ -228,12 +228,14 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
               ? '${suggestion.travelTimeMinutes}min travel + ${suggestion.prepTimeMinutes}min prep'
               : null;
 
+          final l10n = AppLocalizations.of(context)!;
+
           return AlertDialog(
-            title: const Row(
+            title: Row(
               children: [
-                Icon(Icons.alarm_add, color: Colors.blue),
-                SizedBox(width: 8),
-                Text('Set Reminder'),
+                const Icon(Icons.alarm_add, color: Colors.blue),
+                const SizedBox(width: 8),
+                Text(l10n.setReminderDialogTitle),
               ],
             ),
             content: Column(
@@ -241,7 +243,7 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'For: ${widget.todo.title}',
+                  l10n.reminderFor(widget.todo.title),
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 const SizedBox(height: 16),
@@ -302,14 +304,14 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
                     }
                   },
                   icon: const Icon(Icons.edit),
-                  label: const Text('Change time'),
+                  label: Text(l10n.changeTime),
                 ),
               ],
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
+                child: Text(l10n.cancel),
               ),
               ElevatedButton.icon(
                 onPressed: () => Navigator.pop(context, true),
@@ -318,7 +320,7 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
                   foregroundColor: Colors.white,
                 ),
                 icon: const Icon(Icons.alarm_add),
-                label: const Text('Set Reminder'),
+                label: Text(l10n.setReminderButton),
               ),
             ],
           );
@@ -363,7 +365,7 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'No suggestions for this task',
+                    AppLocalizations.of(context)!.noSuggestionsForTask,
                     style: TextStyle(
                       fontSize: 13,
                       color: Colors.grey.shade700,
@@ -589,10 +591,10 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
                           const SizedBox(width: 4),
                           Text(
                             _isLoadingSuggestions
-                                ? 'Loading...'
+                                ? AppLocalizations.of(context)!.loadingSuggestions
                                 : _showSuggestions
-                                    ? 'Hide suggestions'
-                                    : 'Smart suggestions',
+                                    ? AppLocalizations.of(context)!.hideSuggestionsButton
+                                    : AppLocalizations.of(context)!.smartSuggestionsButton,
                             style: TextStyle(
                               fontSize: 11,
                               color: Theme.of(context).colorScheme.primary,
