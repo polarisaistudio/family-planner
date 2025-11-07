@@ -25,16 +25,24 @@ class TranslationService {
       // Get or create translator
       final translator = _getTranslator(sourceLanguage, targetLanguage);
 
-      // Check if model is downloaded
+      // Check if models are downloaded (both source and target)
       final modelManager = OnDeviceTranslatorModelManager();
-      final isDownloaded = await modelManager.isModelDownloaded(targetLanguage);
 
-      _modelDownloaded[translatorKey] = isDownloaded;
+      // Check source language model
+      final isSourceDownloaded = await modelManager.isModelDownloaded(sourceLanguage);
+      if (!isSourceDownloaded) {
+        print('⚠️ [TRANSLATION] Model for $sourceLanguage not downloaded, downloading...');
+        await downloadModel(sourceLanguage);
+      }
 
-      if (!isDownloaded) {
+      // Check target language model
+      final isTargetDownloaded = await modelManager.isModelDownloaded(targetLanguage);
+      if (!isTargetDownloaded) {
         print('⚠️ [TRANSLATION] Model for $targetLanguage not downloaded, downloading...');
         await downloadModel(targetLanguage);
       }
+
+      _modelDownloaded[translatorKey] = isTargetDownloaded && isSourceDownloaded;
 
       // Translate
       final translatedText = await translator.translateText(text);
