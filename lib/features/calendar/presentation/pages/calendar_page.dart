@@ -200,9 +200,31 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
   }
 
   List<TodoEntity> _getTodosForDay(List<TodoEntity> todos, DateTime day) {
-    return todos.where((todo) {
+    final dayTodos = todos.where((todo) {
       return isSameDay(todo.todoDate, day);
     }).toList();
+
+    // Sort by time first, then priority
+    dayTodos.sort((a, b) {
+      // Todos with time come before todos without time
+      final aHasTime = a.todoTime != null;
+      final bHasTime = b.todoTime != null;
+
+      if (aHasTime && !bHasTime) return -1;
+      if (!aHasTime && bHasTime) return 1;
+
+      // Both have time or both don't have time
+      if (aHasTime && bHasTime) {
+        // Compare by time
+        final timeComparison = a.todoTime!.compareTo(b.todoTime!);
+        if (timeComparison != 0) return timeComparison;
+      }
+
+      // If times are equal (or both null), sort by priority
+      return a.priority.compareTo(b.priority);
+    });
+
+    return dayTodos;
   }
 
   List<TodoEntity> _filterTodosByUser(List<TodoEntity> todos) {

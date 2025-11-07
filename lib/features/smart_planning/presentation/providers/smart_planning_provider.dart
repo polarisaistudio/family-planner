@@ -4,56 +4,73 @@ import 'open_meteo_weather_provider.dart';
 import 'location_provider.dart';
 import 'notification_provider.dart';
 import 'permission_provider.dart';
+import '../../../../core/constants/app_constants.dart';
 
 /// Smart suggestion for a todo
 class SmartSuggestion {
-  final String type; // 'weather', 'location', 'traffic', 'preparation'
+  final String todoId; // Link to specific todo
+  final String type; // 'weather', 'location', 'traffic', 'preparation', 'time'
   final String message;
   final String? actionText;
   final DateTime? suggestedTime;
   final bool isUrgent;
+  final int? travelTimeMinutes; // For reminder calculation
+  final int? prepTimeMinutes; // For reminder calculation
 
   const SmartSuggestion({
+    required this.todoId,
     required this.type,
     required this.message,
     this.actionText,
     this.suggestedTime,
     this.isUrgent = false,
+    this.travelTimeMinutes,
+    this.prepTimeMinutes,
   });
 }
 
 /// State class for smart planning
 class SmartPlanningState {
-  final List<SmartSuggestion> suggestions;
+  final Map<String, List<SmartSuggestion>> suggestionsByTodo; // Map todoId -> suggestions
   final bool isAnalyzing;
   final String? error;
 
   const SmartPlanningState({
-    this.suggestions = const [],
+    this.suggestionsByTodo = const {},
     this.isAnalyzing = false,
     this.error,
   });
 
   SmartPlanningState copyWith({
-    List<SmartSuggestion>? suggestions,
+    Map<String, List<SmartSuggestion>>? suggestionsByTodo,
     bool? isAnalyzing,
     String? error,
   }) {
     return SmartPlanningState(
-      suggestions: suggestions ?? this.suggestions,
+      suggestionsByTodo: suggestionsByTodo ?? this.suggestionsByTodo,
       isAnalyzing: isAnalyzing ?? this.isAnalyzing,
       error: error,
     );
   }
 
+  /// Get suggestions for a specific todo
+  List<SmartSuggestion> getSuggestionsForTodo(String todoId) {
+    return suggestionsByTodo[todoId] ?? [];
+  }
+
+  /// Get all suggestions as a flat list (for backward compatibility)
+  List<SmartSuggestion> get allSuggestions {
+    return suggestionsByTodo.values.expand((list) => list).toList();
+  }
+
   /// Get urgent suggestions only
   List<SmartSuggestion> get urgentSuggestions {
-    return suggestions.where((s) => s.isUrgent).toList();
+    return allSuggestions.where((s) => s.isUrgent).toList();
   }
 
   /// Get suggestions by type
   List<SmartSuggestion> getSuggestionsByType(String type) {
-    return suggestions.where((s) => s.type == type).toList();
+    return allSuggestions.where((s) => s.type == type).toList();
   }
 }
 
@@ -62,6 +79,47 @@ class SmartPlanningNotifier extends StateNotifier<SmartPlanningState> {
   final Ref _ref;
 
   SmartPlanningNotifier(this._ref) : super(const SmartPlanningState());
+
+  /// Analyze a single todo and return its suggestions (does not update state)
+  /// This is used by individual todo cards to get their suggestions
+  Future<List<SmartSuggestion>> analyzeSingleTodo(TodoEntity todo) async {
+    final suggestions = <SmartSuggestion>[];
+
+    // Check permissions first
+    final permissionState = _ref.read(permissionProvider);
+    if (!permissionState.hasLocation) {
+      return suggestions;  // Return empty if no permissions
+    }
+
+    // Location-based suggestion with travel time
+    if (todo.location != null && todo.location!.isNotEmpty) {
+      final locationSuggestion = await _analyzeLocationForTodo(todo);
+      if (locationSuggestion != null) {
+        suggestions.add(locationSuggestion);
+      }
+    }
+
+    // Weather suggestion (for outdoor activities)
+    if (_isOutdoorActivity(todo) || todo.weatherDependent) {
+      final weatherSuggestion = await _analyzeWeatherForTodo(todo);
+      if (weatherSuggestion != null) {
+        suggestions.add(weatherSuggestion);
+      }
+    }
+
+    // High priority without time suggestion
+    if (todo.todoTime == null && todo.priority <= 2) {
+      suggestions.add(SmartSuggestion(
+        todoId: todo.id,
+        type: 'time',
+        message: '⏰ High priority task without time set',
+        actionText: 'Set time',
+        isUrgent: true,
+      ));
+    }
+
+    return suggestions;
+  }
 
   /// Analyze a todo and generate smart suggestions
   Future<void> analyzeTodo(TodoEntity todo) async {
@@ -105,8 +163,12 @@ class SmartPlanningNotifier extends StateNotifier<SmartPlanningState> {
         }
       }
 
+      // Store suggestions in map by todoId
+      final newMap = Map<String, List<SmartSuggestion>>.from(state.suggestionsByTodo);
+      newMap[todo.id] = suggestions;
+
       state = state.copyWith(
-        suggestions: suggestions,
+        suggestionsByTodo: newMap,
         isAnalyzing: false,
       );
     } catch (e) {
@@ -122,15 +184,17 @@ class SmartPlanningNotifier extends StateNotifier<SmartPlanningState> {
     state = state.copyWith(isAnalyzing: true, error: null);
 
     try {
-      final suggestions = <SmartSuggestion>[];
+      final newMap = <String, List<SmartSuggestion>>{};
 
       for (final todo in todos) {
         if (!todo.isCompleted) {
+          final todoSuggestions = <SmartSuggestion>[];
+
           // Weather check for outdoor or weather-dependent activities
           if (_isOutdoorActivity(todo) || todo.weatherDependent) {
             final weatherSuggestion = await _analyzeWeather(todo);
             if (weatherSuggestion != null) {
-              suggestions.add(weatherSuggestion);
+              todoSuggestions.add(weatherSuggestion);
             }
           }
 
@@ -138,14 +202,18 @@ class SmartPlanningNotifier extends StateNotifier<SmartPlanningState> {
           if (todo.location != null && todo.location!.isNotEmpty) {
             final locationSuggestion = await _analyzeLocation(todo);
             if (locationSuggestion != null) {
-              suggestions.add(locationSuggestion);
+              todoSuggestions.add(locationSuggestion);
             }
+          }
+
+          if (todoSuggestions.isNotEmpty) {
+            newMap[todo.id] = todoSuggestions;
           }
         }
       }
 
       state = state.copyWith(
-        suggestions: suggestions,
+        suggestionsByTodo: newMap,
         isAnalyzing: false,
       );
     } catch (e) {
@@ -189,6 +257,7 @@ class SmartPlanningNotifier extends StateNotifier<SmartPlanningState> {
 
       if (_isOutdoorActivity(todo) && !isOutdoorFriendly) {
         return SmartSuggestion(
+          todoId: todo.id,
           type: 'weather',
           message: '$emoji Weather alert: $advice for "${todo.title}"',
           actionText: 'Consider rescheduling',
@@ -197,6 +266,7 @@ class SmartPlanningNotifier extends StateNotifier<SmartPlanningState> {
       }
 
       return SmartSuggestion(
+        todoId: todo.id,
         type: 'weather',
         message: '$emoji Weather tip: $advice',
         actionText: null,
@@ -244,6 +314,7 @@ class SmartPlanningNotifier extends StateNotifier<SmartPlanningState> {
       }
 
       return SmartSuggestion(
+        todoId: todo.id,
         type: 'location',
         message: '📍 ${todo.location} is $formattedDistance away (~${travelTime.ceil()} min)',
         actionText: 'Set reminder',
@@ -252,6 +323,110 @@ class SmartPlanningNotifier extends StateNotifier<SmartPlanningState> {
       );
     } catch (e) {
       print('Error analyzing location: $e');
+      return null;
+    }
+  }
+
+  /// Location analysis for individual todo (with travel and prep time)
+  Future<SmartSuggestion?> _analyzeLocationForTodo(TodoEntity todo) async {
+    try {
+      final locationNotifier = _ref.read(locationProvider.notifier);
+
+      // Get coordinates from address
+      final coords = await locationNotifier.getCoordinatesFromAddress(todo.location!);
+      if (coords == null) return null;
+
+      // Calculate distance and travel time
+      final distance = await locationNotifier.calculateDistanceTo(
+        targetLat: coords['latitude']!,
+        targetLon: coords['longitude']!,
+      );
+
+      if (distance == null) return null;
+
+      final travelTime = locationNotifier.estimateTravelTime(
+        distanceMeters: distance,
+        averageSpeedKmh: 40,
+      );
+
+      final formattedDistance = locationNotifier.formatDistance(distance);
+      final prepTime = AppConstants.getPrepTimeForType(todo.type);
+
+      // Calculate suggested departure time
+      DateTime? suggestedDeparture;
+      if (todo.todoTime != null) {
+        final todoDateTime = todo.dateTime!;
+        suggestedDeparture = todoDateTime.subtract(
+          Duration(minutes: travelTime.ceil() + prepTime),
+        );
+      }
+
+      return SmartSuggestion(
+        todoId: todo.id,
+        type: 'location',
+        message: '📍 ${todo.location} is $formattedDistance away (~${travelTime.ceil()} min)',
+        actionText: 'Set reminder',
+        suggestedTime: suggestedDeparture,
+        travelTimeMinutes: travelTime.ceil(),
+        prepTimeMinutes: prepTime,
+        isUrgent: false,
+      );
+    } catch (e) {
+      print('Error analyzing location: $e');
+      return null;
+    }
+  }
+
+  /// Weather analysis for individual todo
+  Future<SmartSuggestion?> _analyzeWeatherForTodo(TodoEntity todo) async {
+    try {
+      final locationState = _ref.read(locationProvider);
+
+      // Get current location if not available
+      if (locationState.currentPosition == null) {
+        await _ref.read(locationProvider.notifier).fetchCurrentLocation();
+      }
+
+      final position = _ref.read(locationProvider).currentPosition;
+      if (position == null) return null;
+
+      // Fetch weather
+      await _ref.read(openMeteoWeatherProvider.notifier).fetchCurrentWeather(
+        latitude: position.latitude,
+        longitude: position.longitude,
+      );
+
+      final weatherState = _ref.read(openMeteoWeatherProvider);
+      if (weatherState.currentWeather == null) return null;
+
+      // Get weather advice for the activity
+      final isOutdoor = _isOutdoorActivity(todo);
+      final weatherNotifier = _ref.read(openMeteoWeatherProvider.notifier);
+      final advice = weatherNotifier.getWeatherAdvice(isOutdoor);
+      final emoji = weatherNotifier.getWeatherEmoji();
+
+      // Check if outdoor-friendly
+      final isOutdoorFriendly = weatherNotifier.isOutdoorFriendly();
+
+      if (_isOutdoorActivity(todo) && !isOutdoorFriendly) {
+        return SmartSuggestion(
+          todoId: todo.id,
+          type: 'weather',
+          message: '$emoji Weather alert: $advice for "${todo.title}"',
+          actionText: 'Consider rescheduling',
+          isUrgent: true,
+        );
+      }
+
+      return SmartSuggestion(
+        todoId: todo.id,
+        type: 'weather',
+        message: '$emoji Weather tip: $advice',
+        actionText: null,
+        isUrgent: false,
+      );
+    } catch (e) {
+      print('Error analyzing weather: $e');
       return null;
     }
   }
@@ -289,6 +464,7 @@ class SmartPlanningNotifier extends StateNotifier<SmartPlanningState> {
       // If event is within prep time, show urgent reminder
       if (timeUntil.inMinutes > 0 && timeUntil.inMinutes <= prepMinutes) {
         return SmartSuggestion(
+          todoId: todo.id,
           type: 'preparation',
           message: '⏰ Time to prepare for "${todo.title}" (in ${timeUntil.inMinutes} min)',
           actionText: 'Start now',
@@ -300,6 +476,7 @@ class SmartPlanningNotifier extends StateNotifier<SmartPlanningState> {
       if (timeUntil.inMinutes > prepMinutes && timeUntil.inHours <= 2) {
         final prepTime = todoDateTime.subtract(Duration(minutes: prepMinutes));
         return SmartSuggestion(
+          todoId: todo.id,
           type: 'preparation',
           message: '🔔 Consider preparing for "${todo.title}" around ${_formatTime(prepTime)}',
           actionText: 'Set reminder',

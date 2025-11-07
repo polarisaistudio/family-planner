@@ -29,6 +29,29 @@ class AppConstants {
   static const int workReminderMinutes = 30;
   static const int shoppingReminderMinutes = 60;
 
+  // Preparation time defaults (in minutes) for smart reminders
+  static const int prepTimeWork = 30;
+  static const int prepTimeAppointment = 20;
+  static const int prepTimeShopping = 10;
+  static const int prepTimePersonal = 15;
+  static const int prepTimeDefault = 15;
+
+  /// Get preparation time based on task type
+  static int getPrepTimeForType(String type) {
+    switch (type.toLowerCase()) {
+      case todoTypeWork:
+        return prepTimeWork;
+      case todoTypeAppointment:
+        return prepTimeAppointment;
+      case todoTypeShopping:
+        return prepTimeShopping;
+      case todoTypePersonal:
+        return prepTimePersonal;
+      default:
+        return prepTimeDefault;
+    }
+  }
+
   // Shared Preferences Keys
   static const String keyLanguage = 'language_preference';
   static const String keyThemeMode = 'theme_mode';

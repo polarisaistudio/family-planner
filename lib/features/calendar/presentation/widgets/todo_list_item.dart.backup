@@ -40,34 +40,24 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
   @override
   void initState() {
     super.initState();
-    // Don't auto-load suggestions to avoid memory issues
-    // Suggestions will load on-demand when user interacts
+    // Automatically load suggestions for todos with time and location
+    if (widget.todo.todoTime != null || widget.todo.location != null) {
+      _loadSuggestions();
+    }
   }
 
   Future<void> _loadSuggestions() async {
-    // Don't reload if already loaded or currently loading
-    if (_isLoadingSuggestions || _suggestions.isNotEmpty) return;
-
     setState(() => _isLoadingSuggestions = true);
 
-    try {
-      final suggestions = await ref
-          .read(smartPlanningProvider.notifier)
-          .analyzeSingleTodo(widget.todo);
+    final suggestions = await ref
+        .read(smartPlanningProvider.notifier)
+        .analyzeSingleTodo(widget.todo);
 
-      if (mounted) {
-        setState(() {
-          _suggestions = suggestions;
-          _isLoadingSuggestions = false;
-        });
-      }
-    } catch (e) {
-      print('❌ Error loading suggestions for ${widget.todo.title}: $e');
-      if (mounted) {
-        setState(() {
-          _isLoadingSuggestions = false;
-        });
-      }
+    if (mounted) {
+      setState(() {
+        _suggestions = suggestions;
+        _isLoadingSuggestions = false;
+      });
     }
   }
 
@@ -87,39 +77,39 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final priorityColor = AppTheme.getPriorityColor(widget.todo.priority);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final priorityColor = AppTheme.getPriorityColor(todo.priority);
 
     // Get category if exists
     CategoryEntity? category;
-    if (widget.todo.category != null) {
+    if (todo.category != null) {
       category = PredefinedCategories.categories
-          .where((c) => c.id == widget.todo.category)
+          .where((c) => c.id == todo.category)
           .firstOrNull;
     }
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      color: widget.isSelected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1) : null,
+      color: isSelected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1) : null,
       child: ListTile(
         onTap: () {
-          if (widget.isSelectionMode) {
-            widget.onSelectionChanged?.call();
+          if (isSelectionMode) {
+            onSelectionChanged?.call();
           } else {
             // Open edit dialog
             showDialog(
               context: context,
               builder: (context) => AddTodoDialog(
-                selectedDate: widget.todo.todoDate,
-                todoToEdit: widget.todo,
+                selectedDate: todo.todoDate,
+                todoToEdit: todo,
               ),
             );
           }
         },
-        leading: widget.isSelectionMode
+        leading: isSelectionMode
             ? Checkbox(
-                value: widget.isSelected,
-                onChanged: (_) => widget.onSelectionChanged?.call(),
+                value: isSelected,
+                onChanged: (_) => onSelectionChanged?.call(),
               )
             : category != null
                 ? CircleAvatar(
@@ -139,18 +129,18 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
                     ),
                   ),
         title: TranslatedText(
-          widget.todo.title,
+          todo.title,
           style: TextStyle(
-            decoration: widget.todo.isCompleted ? TextDecoration.lineThrough : null,
-            color: widget.todo.isCompleted ? Colors.grey : null,
+            decoration: todo.isCompleted ? TextDecoration.lineThrough : null,
+            color: todo.isCompleted ? Colors.grey : null,
           ),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (widget.todo.description != null && widget.todo.description!.isNotEmpty)
+            if (todo.description != null && todo.description!.isNotEmpty)
               TranslatedText(
-                widget.todo.description!,
+                todo.description!,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -158,28 +148,28 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
             Row(
               children: [
                 Icon(
-                  _getTypeIcon(widget.todo.type),
+                  _getTypeIcon(todo.type),
                   size: 14,
                   color: Colors.grey,
                 ),
                 const SizedBox(width: 4),
                 TranslatedText(
-                  widget.todo.type,
+                  todo.type,
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
                 const SizedBox(width: 12),
-                if (widget.todo.todoTime != null) ...[
+                if (todo.todoTime != null) ...[
                   const Icon(Icons.access_time, size: 14, color: Colors.grey),
                   const SizedBox(width: 4),
                   Text(
-                    DateFormat('HH:mm').format(widget.todo.todoTime!),
+                    DateFormat('HH:mm').format(todo.todoTime!),
                     style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                 ],
               ],
             ),
             // Display subtask progress
-            if (widget.todo.hasSubtasks) ...[
+            if (todo.hasSubtasks) ...[
               const SizedBox(height: 6),
               Row(
                 children: [
@@ -190,7 +180,7 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    AppLocalizations.of(context)!.subtasksCount(widget.todo.subtasksCompleted, widget.todo.subtasksTotal),
+                    AppLocalizations.of(context)!.subtasksCount(todo.subtasksCompleted, todo.subtasksTotal),
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey.shade600,
@@ -199,10 +189,10 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: LinearProgressIndicator(
-                      value: widget.todo.subtaskCompletionPercentage,
+                      value: todo.subtaskCompletionPercentage,
                       backgroundColor: Colors.grey.shade200,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        widget.todo.subtaskCompletionPercentage == 1.0
+                        todo.subtaskCompletionPercentage == 1.0
                             ? Colors.green
                             : Theme.of(context).colorScheme.primary,
                       ),
@@ -213,12 +203,12 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
               ),
             ],
             // Display tags
-            if (widget.todo.tags != null && widget.todo.tags!.isNotEmpty) ...[
+            if (todo.tags != null && todo.tags!.isNotEmpty) ...[
               const SizedBox(height: 6),
               Wrap(
                 spacing: 4,
                 runSpacing: 4,
-                children: widget.todo.tags!.take(3).map((tag) {
+                children: todo.tags!.take(3).map((tag) {
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
@@ -235,12 +225,12 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
                   );
                 }).toList()
                   ..addAll(
-                    widget.todo.tags!.length > 3
+                    todo.tags!.length > 3
                         ? [
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               child: Text(
-                                '+${widget.todo.tags!.length - 3}',
+                                '+${todo.tags!.length - 3}',
                                 style: const TextStyle(
                                   fontSize: 10,
                                   color: Colors.grey,
@@ -254,7 +244,7 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
             ],
           ],
         ),
-        trailing: widget.isSelectionMode
+        trailing: isSelectionMode
             ? null
             : Row(
           mainAxisSize: MainAxisSize.min,
@@ -267,7 +257,7 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                'P${widget.todo.priority}',
+                'P${todo.priority}',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -278,13 +268,13 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
             const SizedBox(width: 8),
             // Complete Checkbox
             Checkbox(
-              value: widget.todo.isCompleted,
+              value: todo.isCompleted,
               onChanged: (value) async {
                 try {
                   // Check if task is being completed (not uncompleted)
-                  final wasCompleted = widget.todo.isCompleted;
+                  final wasCompleted = todo.isCompleted;
 
-                  await ref.read(todosProvider.notifier).toggleTodoStatus(widget.todo.id);
+                  await ref.read(todosProvider.notifier).toggleTodoStatus(todo.id);
 
                   // Send notification if task was just completed
                   if (!wasCompleted && value == true) {
@@ -292,7 +282,7 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
                     if (user != null) {
                       final notificationService = ref.read(todoNotificationServiceProvider);
                       await notificationService.notifyTaskCompleted(
-                        todo: widget.todo,
+                        todo: todo,
                         completedByName: user.fullName ?? 'Someone',
                       );
                     }
@@ -308,7 +298,7 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
                           textColor: Colors.white,
                           onPressed: () async {
                             try {
-                              await ref.read(todosProvider.notifier).toggleTodoStatus(widget.todo.id);
+                              await ref.read(todosProvider.notifier).toggleTodoStatus(todo.id);
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
@@ -344,7 +334,7 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
               onPressed: () async {
                 String? deleteOption;
 
-                if (widget.todo.isRecurring || widget.todo.isRecurrenceInstance) {
+                if (todo.isRecurring || todo.isRecurrenceInstance) {
                   // Show options for recurring events
                   deleteOption = await showDialog<String>(
                     context: context,
@@ -395,7 +385,7 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
                   try {
                     if (deleteOption == 'all') {
                       // Delete all recurring instances
-                      final parentId = widget.todo.recurrenceParentId ?? widget.todo.id;
+                      final parentId = todo.recurrenceParentId ?? todo.id;
                       await ref.read(todosProvider.notifier).deleteRecurringTodos(parentId);
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -407,7 +397,7 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
                       }
                     } else {
                       // Delete only this instance
-                      await ref.read(todosProvider.notifier).deleteTodo(widget.todo.id);
+                      await ref.read(todosProvider.notifier).deleteTodo(todo.id);
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -428,7 +418,7 @@ class _TodoListItemState extends ConsumerState<TodoListItem> {
                             textColor: Colors.white,
                             onPressed: () async {
                               try {
-                                await ref.read(todosProvider.notifier).deleteTodo(widget.todo.id);
+                                await ref.read(todosProvider.notifier).deleteTodo(todo.id);
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(

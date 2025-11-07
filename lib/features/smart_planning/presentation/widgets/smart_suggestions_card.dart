@@ -76,7 +76,7 @@ class SmartSuggestionsCard extends ConsumerWidget {
     }
 
     // Show suggestions if any
-    if (smartPlanningState.suggestions.isEmpty) {
+    if (smartPlanningState.allSuggestions.isEmpty) {
       return const SizedBox.shrink();
     }
 
@@ -98,7 +98,7 @@ class SmartSuggestionsCard extends ConsumerWidget {
             ],
           ),
         ),
-        ...smartPlanningState.suggestions.map((suggestion) {
+        ...smartPlanningState.allSuggestions.map((suggestion) {
           return _SuggestionItem(suggestion: suggestion);
         }).toList(),
         const SizedBox(height: 4),

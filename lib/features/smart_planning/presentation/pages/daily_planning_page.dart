@@ -79,7 +79,7 @@ class _DailyPlanningPageState extends ConsumerState<DailyPlanningPage> {
 
     // 4. Analyze the schedule
     await ref.read(smartPlanningProvider.notifier).analyzeDayTodos(todos);
-    final suggestions = ref.read(smartPlanningProvider).suggestions;
+    final suggestions = ref.read(smartPlanningProvider).allSuggestions;
 
     return SmartSchedule(
       date: widget.selectedDate,
