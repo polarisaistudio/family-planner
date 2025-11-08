@@ -32,9 +32,9 @@ class CurrentUserNotifier extends StateNotifier<AsyncValue<UserEntity?>> {
     try {
       print('🔍 [AUTH] Initializing auth state...');
       final user = await _authRepository.getCurrentUser().timeout(
-        const Duration(seconds: 10),
+        const Duration(seconds: 5),
         onTimeout: () {
-          print('⚠️ [AUTH] getCurrentUser timed out after 10s, assuming not signed in');
+          print('⚠️ [AUTH] getCurrentUser timed out after 5s, assuming not signed in');
           return null;
         },
       );
@@ -42,7 +42,14 @@ class CurrentUserNotifier extends StateNotifier<AsyncValue<UserEntity?>> {
       state = AsyncValue.data(user);
     } catch (e, stackTrace) {
       print('❌ [AUTH] Error initializing auth state: $e');
-      // On error, assume not signed in rather than staying in loading state
+      print('🔧 [AUTH] Stacktrace: $stackTrace');
+      // On ANY error, sign out and clear corrupted state
+      try {
+        await _authRepository.signOut();
+      } catch (signOutError) {
+        print('⚠️ [AUTH] Error during emergency signout: $signOutError');
+      }
+      // Set to not signed in to show login screen
       state = AsyncValue.data(null);
     }
   }

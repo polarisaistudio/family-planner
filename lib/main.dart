@@ -17,31 +17,62 @@ import 'shared/widgets/loading_screen.dart';
 import 'l10n/app_localizations.dart';
 
 void main() async {
+  // Catch all errors to prevent crash loops
+  FlutterError.onError = (details) {
+    print('❌ [FLUTTER ERROR] ${details.exception}');
+    print('🔧 [FLUTTER ERROR] ${details.stack}');
+  };
+
   WidgetsFlutterBinding.ensureInitialized();
 
   print('🚀 [MAIN] Starting app...');
 
-  // Initialize Firebase only on platforms that support SDK (Web/Android)
-  // iOS uses REST API to avoid gRPC/Xcode 16 issues
-  if (PlatformService.useFirebaseSDK) {
-    print('🔥 Initializing Firebase SDK...');
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
+  try {
+    // Initialize Firebase only on platforms that support SDK (Web/Android)
+    // iOS uses REST API to avoid gRPC/Xcode 16 issues
+    if (PlatformService.useFirebaseSDK) {
+      print('🔥 Initializing Firebase SDK...');
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      print('✅ Firebase SDK initialized');
+    } else {
+      print('📱 Using Firebase REST API (iOS - no gRPC dependencies)');
+    }
+
+    print('🚀 [MAIN] Running app...');
+
+    runApp(
+      const ProviderScope(
+        child: FamilyPlannerApp(),
+      ),
     );
-    print('✅ Firebase SDK initialized');
-  } else {
-    print('📱 Using Firebase REST API (iOS - no gRPC dependencies)');
+
+    print('🚀 [MAIN] App started!');
+  } catch (e, stackTrace) {
+    print('❌ [MAIN] Fatal error during startup: $e');
+    print('🔧 [MAIN] Stacktrace: $stackTrace');
+
+    // Try to run app anyway with error screen
+    runApp(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                const Text('App failed to start'),
+                const SizedBox(height: 8),
+                Text('Error: $e'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
-
-  print('🚀 [MAIN] Running app...');
-
-  runApp(
-    const ProviderScope(
-      child: FamilyPlannerApp(),
-    ),
-  );
-
-  print('🚀 [MAIN] App started!');
 }
 
 class FamilyPlannerApp extends ConsumerWidget {
