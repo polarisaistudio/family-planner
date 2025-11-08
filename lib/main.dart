@@ -112,14 +112,18 @@ class AuthWrapper extends ConsumerWidget {
           return const LoginPage();
         }
 
-        // Initialize FCM when user is logged in
-        ref.listen(fcmInitializerProvider, (previous, next) {
-          next.when(
-            data: (_) => print('✅ FCM initialized successfully'),
-            loading: () => print('🔄 Initializing FCM...'),
-            error: (error, stack) => print('❌ FCM initialization error: $error'),
-          );
-        });
+        // Initialize FCM when user is logged in (only on platforms with SDK)
+        if (PlatformService.useFirebaseSDK) {
+          ref.listen(fcmInitializerProvider, (previous, next) {
+            next.when(
+              data: (_) => print('✅ FCM initialized successfully'),
+              loading: () => print('🔄 Initializing FCM...'),
+              error: (error, stack) => print('❌ FCM initialization error: $error'),
+            );
+          });
+        } else {
+          print('📱 Skipping FCM on iOS (using REST API)');
+        }
 
         // Initialize translation models in background
         // Temporarily disabled to debug app hanging issue

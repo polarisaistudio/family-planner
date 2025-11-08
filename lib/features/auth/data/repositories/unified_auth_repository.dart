@@ -1,45 +1,49 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:firebase_auth/firebase_auth.dart';  // Disabled for iOS
+// import 'package:cloud_firestore/cloud_firestore.dart';  // Disabled for iOS
 import '../../domain/entities/user_entity.dart';
 import '../../../../core/platform/platform_service.dart';
-import 'firebase_auth_repository_impl.dart';
+// import 'firebase_auth_repository_impl.dart';  // SDK-based, not used on iOS
 import 'firebase_rest_auth_repository.dart';
 
-/// Unified auth repository that uses Firebase SDK or REST API based on platform
+/// Unified auth repository that uses REST API for iOS
 class UnifiedAuthRepository {
-  final FirebaseAuthRepositoryImpl? _firebaseSDK;
-  final FirebaseRestAuthRepository? _restAPI;
+  final FirebaseRestAuthRepository _restAPI;
 
   // Cache for current user (updated on sign in/sign up)
   UserEntity? _cachedUser;
+  bool _initialized = false;
 
   UnifiedAuthRepository({
-    FirebaseAuth? firebaseAuth,
-    FirebaseFirestore? firestore,
-  })  : _firebaseSDK = PlatformService.useFirebaseSDK && firebaseAuth != null && firestore != null
-            ? FirebaseAuthRepositoryImpl(firebaseAuth, firestore)
-            : null,
-        _restAPI = PlatformService.useRestApi ? FirebaseRestAuthRepository() : null;
+    dynamic firebaseAuth,  // Not used on iOS
+    dynamic firestore,     // Not used on iOS
+  })  : _restAPI = FirebaseRestAuthRepository();
+
+  /// Initialize repository and restore session from storage
+  Future<void> init() async {
+    if (_initialized) return;
+
+    print('🔵 [UNIFIED AUTH] Initializing...');
+    await _restAPI.init();
+    _cachedUser = _restAPI.getCurrentUser();
+    _initialized = true;
+
+    if (_cachedUser != null) {
+      print('🟢 [UNIFIED AUTH] Session restored: ${_cachedUser!.email}');
+    } else {
+      print('🔵 [UNIFIED AUTH] No session found');
+    }
+  }
 
   Future<UserEntity?> signInWithEmailAndPassword({
     required String email,
     required String password,
   }) async {
-    if (PlatformService.useRestApi) {
-      print('📱 [UNIFIED AUTH] Using REST API (iOS)');
-      _cachedUser = await _restAPI!.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      return _cachedUser;
-    } else {
-      print('🌐 [UNIFIED AUTH] Using Firebase SDK (Web/Android)');
-      _cachedUser = await _firebaseSDK!.signIn(
-        email: email,
-        password: password,
-      );
-      return _cachedUser;
-    }
+    print('📱 [UNIFIED AUTH] Using REST API (iOS)');
+    _cachedUser = await _restAPI.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    return _cachedUser;
   }
 
   Future<UserEntity?> signUpWithEmailAndPassword({
@@ -47,46 +51,48 @@ class UnifiedAuthRepository {
     required String password,
     required String fullName,
   }) async {
-    if (PlatformService.useRestApi) {
-      print('📱 [UNIFIED AUTH] Using REST API (iOS)');
-      _cachedUser = await _restAPI!.signUpWithEmailAndPassword(
-        email: email,
-        password: password,
-        fullName: fullName,
-      );
-      return _cachedUser;
-    } else {
-      print('🌐 [UNIFIED AUTH] Using Firebase SDK (Web/Android)');
-      _cachedUser = await _firebaseSDK!.signUp(
-        email: email,
-        password: password,
-        fullName: fullName,
-      );
-      return _cachedUser;
-    }
+    print('📱 [UNIFIED AUTH] Using REST API (iOS)');
+    _cachedUser = await _restAPI.signUpWithEmailAndPassword(
+      email: email,
+      password: password,
+      fullName: fullName,
+    );
+    return _cachedUser;
   }
 
   Future<void> signOut() async {
     _cachedUser = null;
-    if (PlatformService.useRestApi) {
-      await _restAPI!.signOut();
-    } else {
-      await _firebaseSDK!.signOut();
-    }
+    await _restAPI.signOut();
   }
 
   Future<UserEntity?> getCurrentUser() async {
+    // Initialize if not already done (restore session from storage)
+    try {
+      await init();
+    } catch (e) {
+      print('⚠️ [UNIFIED AUTH] Error during init: $e');
+      // If init fails, clear any partial state and return null
+      _cachedUser = null;
+      return null;
+    }
+
     if (_cachedUser != null) {
       return _cachedUser;
     }
 
-    if (PlatformService.useRestApi) {
-      _cachedUser = _restAPI!.getCurrentUser();
-      return _cachedUser;
-    } else {
-      _cachedUser = await _firebaseSDK!.getCurrentUser();
-      return _cachedUser;
+    _cachedUser = _restAPI.getCurrentUser();
+
+    // If we have tokens but no valid user, session is corrupted
+    if (_cachedUser == null && _restAPI.isSignedIn()) {
+      print('⚠️ [UNIFIED AUTH] Invalid session detected, signing out');
+      try {
+        await signOut();
+      } catch (e) {
+        print('⚠️ [UNIFIED AUTH] Error during signout: $e');
+      }
     }
+
+    return _cachedUser;
   }
 
   // Synchronous version that returns cached user
@@ -95,11 +101,7 @@ class UnifiedAuthRepository {
   }
 
   Future<bool> isSignedIn() async {
-    if (PlatformService.useRestApi) {
-      return _restAPI!.isSignedIn();
-    } else {
-      return await _firebaseSDK!.isAuthenticated();
-    }
+    return _restAPI.isSignedIn();
   }
 
   Future<String?> getCurrentUserId() async {
@@ -116,31 +118,14 @@ class UnifiedAuthRepository {
     String? fullName,
     String? languagePreference,
   }) async {
-    if (PlatformService.useRestApi) {
-      throw UnimplementedError('updateProfile not implemented for REST API yet');
-    } else {
-      return await _firebaseSDK!.updateProfile(
-        fullName: fullName,
-        languagePreference: languagePreference,
-      );
-    }
+    throw UnimplementedError('updateProfile not implemented for REST API yet');
   }
 
   Future<void> resetPassword(String email) async {
-    if (PlatformService.useRestApi) {
-      throw UnimplementedError('resetPassword not implemented for REST API yet');
-    } else {
-      return await _firebaseSDK!.resetPassword(email);
-    }
+    throw UnimplementedError('resetPassword not implemented for REST API yet');
   }
 
   String? getIdToken() {
-    if (PlatformService.useRestApi) {
-      return _restAPI!.getIdToken();
-    } else {
-      // For Firebase SDK, we'd need to get the token differently
-      // For now, return null as SDK handles auth internally
-      return null;
-    }
+    return _restAPI.getIdToken();
   }
 }

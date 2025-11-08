@@ -64,13 +64,20 @@ class FirebaseRestTodoRepository {
 
         print('🟢 [REST FIRESTORE] Fetched ${todos.length} todos');
         return todos;
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
+        print('🔴 [REST FIRESTORE] Auth error: ${response.statusCode} - Token expired or invalid');
+        // Return empty list instead of throwing to prevent crash
+        return [];
       } else {
         print('🔴 [REST FIRESTORE] Error: ${response.statusCode}');
-        throw Exception('Failed to fetch todos: ${response.statusCode}');
+        print('🔴 [REST FIRESTORE] Response: ${response.body}');
+        // Return empty list instead of throwing to prevent crash
+        return [];
       }
     } catch (e) {
       print('🔴 [REST FIRESTORE] Exception: $e');
-      rethrow;
+      // Return empty list instead of crashing the app
+      return [];
     }
   }
 

@@ -1,25 +1,30 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../data/repositories/firebase_todo_repository_impl.dart';
+// import 'package:firebase_auth/firebase_auth.dart';  // Disabled for iOS
+// import 'package:cloud_firestore/cloud_firestore.dart';  // Disabled for iOS
+// import '../../data/repositories/firebase_todo_repository_impl.dart';  // SDK-based, not used
 import '../../data/repositories/unified_todo_repository.dart';
 import '../../domain/entities/todo_entity.dart';
 import '../../domain/repositories/todo_repository.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 
-/// Provider for Unified Todo Repository (uses REST on iOS, SDK elsewhere)
+/// Provider for Unified Todo Repository (uses REST API only for iOS)
 final unifiedTodoRepositoryProvider = Provider<UnifiedTodoRepository>((ref) {
   final authRepo = ref.watch(unifiedAuthRepositoryProvider);
   return UnifiedTodoRepository(
     authRepository: authRepo,
-    firebaseAuth: ref.watch(firebaseAuthProvider),
-    firestore: ref.watch(firestoreProvider),
+    firebaseAuth: null,  // iOS uses REST API
+    firestore: null,      // iOS uses REST API
   );
 });
 
 /// Provider for all todos
 final todosProvider = StateNotifierProvider<TodosNotifier, AsyncValue<List<TodoEntity>>>((ref) {
-  return TodosNotifier(ref.watch(unifiedTodoRepositoryProvider));
+  // Watch the current user to invalidate todos when user changes
+  final user = ref.watch(currentUserProvider).value;
+  final todoRepository = ref.watch(unifiedTodoRepositoryProvider);
+
+  print('🔵 [TODOS PROVIDER] Creating TodosNotifier for user: ${user?.email ?? "null"}');
+  return TodosNotifier(todoRepository);
 });
 
 /// Notifier for managing todos state

@@ -1,27 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../data/repositories/firebase_auth_repository_impl.dart';
+// import 'package:firebase_auth/firebase_auth.dart';  // Disabled for iOS
+// import 'package:cloud_firestore/cloud_firestore.dart';  // Disabled for iOS
+// import '../../data/repositories/firebase_auth_repository_impl.dart';  // SDK-based, not used
 import '../../data/repositories/unified_auth_repository.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../../core/platform/platform_service.dart';
 
-/// Provider for Firebase Auth instance (only used on Web/Android)
-final firebaseAuthProvider = Provider<FirebaseAuth?>((ref) {
-  return PlatformService.useFirebaseSDK ? FirebaseAuth.instance : null;
-});
-
-/// Provider for Firestore instance (only used on Web/Android)
-final firestoreProvider = Provider<FirebaseFirestore?>((ref) {
-  return PlatformService.useFirebaseSDK ? FirebaseFirestore.instance : null;
-});
-
-/// Provider for Unified Auth Repository (uses REST on iOS, SDK elsewhere)
+/// Provider for Unified Auth Repository (uses REST API only for iOS)
 final unifiedAuthRepositoryProvider = Provider<UnifiedAuthRepository>((ref) {
   return UnifiedAuthRepository(
-    firebaseAuth: ref.watch(firebaseAuthProvider),
-    firestore: ref.watch(firestoreProvider),
+    firebaseAuth: null,  // iOS uses REST API
+    firestore: null,      // iOS uses REST API
   );
 });
 

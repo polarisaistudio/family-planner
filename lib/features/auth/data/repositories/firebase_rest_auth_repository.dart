@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/user_entity.dart';
 
 /// Firebase Authentication using REST API (no gRPC dependencies)
@@ -10,9 +11,78 @@ class FirebaseRestAuthRepository {
   static const String _projectId = 'family-planner-86edd';
   static const String _firestoreBaseUrl = 'https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents';
 
+  // SharedPreferences keys
+  static const String _keyIdToken = 'auth_id_token';
+  static const String _keyUserId = 'auth_user_id';
+  static const String _keyUserEmail = 'auth_user_email';
+  static const String _keyUserFullName = 'auth_user_full_name';
+  static const String _keyRefreshToken = 'auth_refresh_token';
+
   String? _idToken;
   String? _userId;
+  String? _refreshToken;
   UserEntity? _currentUser;
+
+  /// Initialize and restore session from storage
+  Future<void> init() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _idToken = prefs.getString(_keyIdToken);
+      _userId = prefs.getString(_keyUserId);
+
+      if (_idToken != null && _userId != null) {
+        print('🔵 [REST AUTH] Restoring session for user: $_userId');
+        // Restore user data
+        final email = prefs.getString(_keyUserEmail) ?? '';
+        final fullName = prefs.getString(_keyUserFullName) ?? '';
+
+        if (email.isNotEmpty) {
+          _currentUser = UserEntity(
+            id: _userId!,
+            email: email,
+            fullName: fullName.isEmpty ? null : fullName,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
+          print('🟢 [REST AUTH] Session restored: $email');
+        }
+      }
+    } catch (e) {
+      print('⚠️ [REST AUTH] Failed to restore session: $e');
+    }
+  }
+
+  /// Save auth tokens to persistent storage
+  Future<void> _saveTokens() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (_idToken != null) {
+        await prefs.setString(_keyIdToken, _idToken!);
+      }
+      if (_userId != null) {
+        await prefs.setString(_keyUserId, _userId!);
+      }
+      if (_currentUser != null) {
+        await prefs.setString(_keyUserEmail, _currentUser!.email);
+        await prefs.setString(_keyUserFullName, _currentUser!.fullName ?? '');
+      }
+    } catch (e) {
+      print('⚠️ [REST AUTH] Failed to save tokens: $e');
+    }
+  }
+
+  /// Clear auth tokens from storage
+  Future<void> _clearTokens() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_keyIdToken);
+      await prefs.remove(_keyUserId);
+      await prefs.remove(_keyUserEmail);
+      await prefs.remove(_keyUserFullName);
+    } catch (e) {
+      print('⚠️ [REST AUTH] Failed to clear tokens: $e');
+    }
+  }
 
   /// Sign in with email and password
   Future<UserEntity?> signInWithEmailAndPassword({
@@ -58,6 +128,7 @@ class FirebaseRestAuthRepository {
         }
 
         _currentUser = user;
+        await _saveTokens(); // Persist session
 
         print('🟢 [REST AUTH] User: ${user?.fullName} (${user?.email})');
         return user;
@@ -110,6 +181,7 @@ class FirebaseRestAuthRepository {
 
         await _createUserProfile(user);
         _currentUser = user;
+        await _saveTokens(); // Persist session
 
         print('🟢 [REST AUTH] User profile created: ${user.fullName}');
         return user;
@@ -130,6 +202,7 @@ class FirebaseRestAuthRepository {
     _idToken = null;
     _userId = null;
     _currentUser = null;
+    await _clearTokens(); // Clear persisted session
     print('🟢 [REST AUTH] Signed out');
   }
 
